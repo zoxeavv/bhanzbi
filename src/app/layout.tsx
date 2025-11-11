@@ -2,6 +2,7 @@
 import { baselightTheme } from "@/utils/theme/DefaultColors";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { ClientProviders } from "@/components/layout/ClientProviders";
 import './global.css'
 
 
@@ -16,7 +17,9 @@ export default function RootLayout({
         <ThemeProvider theme={baselightTheme}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          {children}
+          <ClientProviders>
+            {children}
+          </ClientProviders>
         </ThemeProvider>
       </body>
     </html>

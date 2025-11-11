@@ -24,6 +24,28 @@ const Menuitems = [
   },
   {
     navlabel: true,
+    subheader: "CRM",
+  },
+  {
+    id: uniqueId(),
+    title: "Clients",
+    icon: IconUsers,
+    href: "/clients",
+  },
+  {
+    id: uniqueId(),
+    title: "Offers",
+    icon: IconFileInvoice,
+    href: "/offers",
+  },
+  {
+    id: uniqueId(),
+    title: "Templates",
+    icon: IconTemplate,
+    href: "/templates",
+  },
+  {
+    navlabel: true,
     subheader: "UTILITIES",
   },
   {
