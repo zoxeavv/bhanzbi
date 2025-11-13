@@ -1,6 +1,8 @@
 import { listOffers } from '@/lib/db/queries/offers';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OffersPage() {
   const offers = await listOffers();
 

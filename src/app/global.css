@@ -49,6 +49,13 @@
     --grey-400: 216 22% 58%;
     --grey-500: 218 19% 44%;
     --grey-600: 217 26% 22%;
+    
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 217 26% 22%;
+    --sidebar-border: 210 24% 92%;
+    --sidebar-accent: 210 44% 96%;
+    --sidebar-accent-foreground: 217 26% 22%;
   }
 
   .dark {
@@ -88,6 +95,13 @@
     --border: 216 22% 58%;
     --input: 216 22% 58%;
     --ring: 224 100% 68%;
+    
+    /* Sidebar colors - dark mode */
+    --sidebar-background: 217 26% 22%;
+    --sidebar-foreground: 210 44% 96%;
+    --sidebar-border: 216 22% 58%;
+    --sidebar-accent: 216 22% 58%;
+    --sidebar-accent-foreground: 210 44% 96%;
   }
 }
 

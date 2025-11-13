@@ -43,7 +43,13 @@ function parseTags(tagsStr: string | undefined): string[] {
   return tagsStr.split('|').map(t => t.trim()).filter(Boolean);
 }
 
-export async function importClientsFromCSV(file: File): Promise<void> {
+export async function importClientsFromCSV(file: File): Promise<{
+  success: boolean;
+  imported: number;
+  errors: number;
+  errorRows: Array<{ row: number; error: string }>;
+  message?: string;
+}> {
   try {
     if (file.size > 5 * 1024 * 1024) {
       throw new Error('File size must be less than 5MB');

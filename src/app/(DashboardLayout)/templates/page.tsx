@@ -1,6 +1,8 @@
 import { listTemplates } from '@/lib/db/queries/templates';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TemplatesPage() {
   const templates = await listTemplates();
 
