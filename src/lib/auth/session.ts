@@ -65,20 +65,48 @@ export async function getSession(): Promise<Session> {
 export async function getSessionFromRequest(request: NextRequest): Promise<Session> {
   const { url, key } = getSupabaseConfig();
   
+  // Extract project ref from URL to filter cookies
+  const urlObj = new URL(url);
+  const projectRef = urlObj.hostname.split('.')[0]; // e.g., "bofkyolkmaxouwjzlnwa"
+  
   // Verify we're using the same config as client
   console.log('[getSessionFromRequest] Config check:', {
     url: url ? `${url.substring(0, 30)}...` : 'missing',
     keyPrefix: key ? `${key.substring(0, 10)}...` : 'missing',
+    projectRef: projectRef,
     usingSameEnvVars: true, // Both use NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+  });
+  
+  // Filter cookies to only include ones matching the current project
+  // Supabase v2 cookie format: sb-<project-ref>-auth-token
+  const allCookies = request.cookies.getAll();
+  const filteredCookies = allCookies.filter(cookie => {
+    // Include cookies that match the current project ref
+    if (cookie.name.startsWith(`sb-${projectRef}-`)) {
+      return true;
+    }
+    // Exclude other Supabase project cookies to prevent conflicts
+    if (cookie.name.startsWith('sb-') && !cookie.name.startsWith(`sb-${projectRef}-`)) {
+      return false;
+    }
+    // Include non-Supabase cookies (theme, lang, etc.)
+    return true;
+  });
+  
+  console.log('[getSessionFromRequest] Filtered cookies:', {
+    totalCookies: allCookies.length,
+    filteredCookies: filteredCookies.length,
+    projectRef: projectRef,
+    cookieNames: filteredCookies.map(c => c.name),
   });
   
   // Use createServerClient from @supabase/ssr for proper cookie handling in Next.js middleware
   // This correctly reads Supabase v2 cookies (sb-<project-ref>-auth-token format)
-  // Both client and server use NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Filtered to only include cookies for the current project to avoid conflicts
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
-        return request.cookies.getAll().map(cookie => ({
+        return filteredCookies.map(cookie => ({
           name: cookie.name,
           value: cookie.value,
         }));
@@ -93,22 +121,6 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
   });
   
   console.log('[getSessionFromRequest] Using createServerClient for Supabase v2 cookie handling');
-  const cookieNames = request.cookies.getAll().map(c => c.name);
-  const supabaseCookies = cookieNames.filter(name => 
-    name.includes('supabase') || 
-    name.startsWith('sb-') || 
-    name.includes('auth')
-  );
-  console.log('[getSessionFromRequest] Cookie names present:', cookieNames);
-  console.log('[getSessionFromRequest] Supabase cookie names:', supabaseCookies);
-  
-  // Log actual cookie values (first 20 chars only for security)
-  supabaseCookies.forEach(name => {
-    const cookie = request.cookies.get(name);
-    if (cookie) {
-      console.log(`[getSessionFromRequest] Cookie ${name}: ${cookie.value.substring(0, 20)}...`);
-    }
-  });
   
   try {
     const { data: { session: supabaseSession }, error } = await supabase.auth.getSession();
