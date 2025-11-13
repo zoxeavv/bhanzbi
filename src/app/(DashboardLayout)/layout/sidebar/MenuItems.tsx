@@ -1,11 +1,14 @@
 import {
   IconAperture,
   IconCopy,
+  IconFileInvoice,
   IconLayoutDashboard,
   IconLogin,
   IconMoodHappy,
+  IconTemplate,
   IconTypography,
   IconUserPlus,
+  IconUsers,
 } from "@tabler/icons-react";
 
 import { uniqueId } from "lodash";
@@ -21,6 +24,28 @@ const Menuitems = [
     title: "Dashboard",
     icon: IconLayoutDashboard,
     href: "/",
+  },
+  {
+    navlabel: true,
+    subheader: "CRM",
+  },
+  {
+    id: uniqueId(),
+    title: "Clients",
+    icon: IconUsers,
+    href: "/clients",
+  },
+  {
+    id: uniqueId(),
+    title: "Offers",
+    icon: IconFileInvoice,
+    href: "/offers",
+  },
+  {
+    id: uniqueId(),
+    title: "Templates",
+    icon: IconTemplate,
+    href: "/templates",
   },
   {
     navlabel: true,
