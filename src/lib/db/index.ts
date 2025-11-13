@@ -11,13 +11,26 @@ function getEnvVar(key: string): string {
   return value;
 }
 
-const connectionString = getEnvVar('DATABASE_URL');
+// Lazy initialization to avoid build-time errors
+let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
 
-const pool = new Pool({
-  connectionString,
+function getDb() {
+  if (!_db) {
+    const connectionString = getEnvVar('DATABASE_URL');
+    _pool = new Pool({
+      connectionString,
+    });
+    _db = drizzle(_pool, { schema });
+  }
+  return _db;
+}
+
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(_target, prop) {
+    return getDb()[prop as keyof ReturnType<typeof drizzle>];
+  },
 });
-
-export const db = drizzle(pool, { schema });
 
 export type Database = typeof db;
 

@@ -152,3 +152,4 @@ npm run dev
 - Middleware uses cookie-based session detection (adjust based on your auth implementation)
 - All monetary values are stored in centimes (divide by 100 for display)
 
+

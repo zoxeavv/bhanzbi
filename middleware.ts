@@ -1,23 +1,51 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSessionFromRequest } from './src/lib/auth/session';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check for session cookie or auth header
-  const sessionCookie = request.cookies.get('sb-access-token');
-  const hasSession = !!sessionCookie;
+  // Debug: Log cookies received by middleware (dev only)
+  if (process.env.NODE_ENV === 'development') {
+    const cookies = request.cookies.getAll();
+    const cookieNames = cookies.map(c => c.name);
+    const supabaseCookieNames = cookieNames.filter(name => 
+      name.includes('supabase') || 
+      name.startsWith('sb-') || 
+      name.includes('auth')
+    );
+    
+    console.log('[Middleware] Request path:', pathname);
+    console.log('[Middleware] Supabase-related cookies:', supabaseCookieNames);
+  }
+  
+  // Validate session using Supabase JWT (now using createServerClient for v2 compatibility)
+  const session = await getSessionFromRequest(request);
+  const hasValidSession = session !== null;
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Middleware] Session validation result:', {
+      hasValidSession,
+      session: session ? { userId: session.user.id, email: session.user.email } : null,
+    });
+  }
+
+  // Allow authentication routes without any redirection
+  if (pathname.startsWith('/authentication/login') || pathname.startsWith('/authentication/register')) {
+    return NextResponse.next();
+  }
 
   // Protect dashboard routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/clients') || pathname.startsWith('/offers') || pathname.startsWith('/templates')) {
-    if (!hasSession) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+    if (!hasValidSession) {
+      console.log('[Middleware] Redirecting to login - no valid session');
+      return NextResponse.redirect(new URL('/authentication/login', request.url));
     }
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from old auth pages (legacy /auth/ routes)
   if (pathname.startsWith('/auth/')) {
-    if (hasSession) {
+    if (hasValidSession) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
@@ -28,4 +56,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
+
 

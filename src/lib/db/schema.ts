@@ -70,3 +70,4 @@ export const crm_users = pgTable('crm_users', {
 //   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 // (same for templates, offers, crm_users)
 
+
