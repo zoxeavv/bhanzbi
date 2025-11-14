@@ -1,110 +1,91 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { clientSchema, type ClientFormData } from "@/lib/validations"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { ArrowLeft } from "lucide-react"
+import { ClientForm, type ClientFormData } from "@/components/clients/ClientForm"
 import { toast } from "sonner"
 
 export default function NewClientPage() {
   const router = useRouter()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
-  })
-
-  async function onSubmit(data: ClientFormData) {
+  const handleSubmit = async (data: ClientFormData) => {
     try {
+      // Transformer les données pour l'API
+      const apiData = {
+        name: data.name,
+        company: data.company,
+        email: data.email || "",
+        phone: data.phone || "",
+        tags: data.tags || [],
+      }
+
       const response = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiData),
       })
 
-      if (response.ok) {
-        toast.success("Client créé avec succès")
-        router.push("/clients")
-        router.refresh()
-      } else {
-        toast.error("Erreur lors de la création du client")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        
+        // Si c'est une erreur de validation Zod, afficher les détails
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const firstError = errorData.details[0]
+          throw new Error(firstError.message || "Erreur de validation")
+        }
+        
+        throw new Error(errorData.error || "Erreur lors de la création du client")
       }
+
+      const client = await response.json()
+
+      toast.success("Client créé avec succès")
+      router.push(`/clients/${client.id}`)
+      router.refresh()
     } catch (error) {
-      toast.error("Une erreur est survenue")
+      // L'erreur sera gérée par le formulaire via setError
+      throw error
     }
   }
 
+  const handleCancel = () => {
+    router.push("/clients")
+  }
+
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/clients">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Nouveau client</h1>
-          <p className="text-muted-foreground mt-2">Ajoutez un nouveau client à votre portefeuille</p>
-        </div>
-      </div>
-
-      {/* Form */}
-      <Card className="p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="company_name">Nom de l'entreprise</Label>
-            <Input id="company_name" {...register("company_name")} placeholder="Ex: TechCorp Solutions" />
-            {errors.company_name && <p className="text-sm text-destructive">{errors.company_name.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contact_name">Nom du contact</Label>
-            <Input id="contact_name" {...register("contact_name")} placeholder="Ex: Marie Dubois" />
-            {errors.contact_name && <p className="text-sm text-destructive">{errors.contact_name.message}</p>}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} placeholder="contact@entreprise.fr" />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Téléphone</Label>
-              <Input id="phone" {...register("phone")} placeholder="+33 1 23 45 67 89" />
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="secteur">Secteur d'activité</Label>
-            <Input id="secteur" {...register("secteur")} placeholder="Ex: Technologie, Finance, Commerce..." />
-            {errors.secteur && <p className="text-sm text-destructive">{errors.secteur.message}</p>}
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Création..." : "Créer le client"}
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] py-8">
+      <div className="w-full max-w-2xl space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href="/clients">
+            <Button variant="ghost" size="icon" aria-label="Retour aux clients">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <Link href="/clients" className="flex-1">
-              <Button type="button" variant="outline" className="w-full bg-transparent">
-                Annuler
-              </Button>
-            </Link>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Nouveau client</h1>
+            <p className="text-muted-foreground mt-2">
+              Ajoutez un nouveau client à votre portefeuille
+            </p>
           </div>
-        </form>
-      </Card>
+        </div>
+
+        {/* Formulaire dans une card centrée */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations du client</CardTitle>
+            <CardDescription>
+              Remplissez les informations pour créer un nouveau client
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ClientForm onSubmit={handleSubmit} onCancel={handleCancel} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

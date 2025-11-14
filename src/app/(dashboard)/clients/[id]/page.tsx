@@ -1,14 +1,22 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Mail, Phone, Building2, Calendar, FileCheck } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, Plus, FileText } from "lucide-react"
 import { getClientById } from "@/lib/db/queries/clients"
 import { listOffers } from "@/lib/db/queries/offers"
 import { getCurrentOrgId } from "@/lib/auth/session"
+import { ClientInfoCard } from "@/components/clients/ClientInfoCard"
+import { ClientOffersTable } from "@/components/clients/ClientOffersTable"
+import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline"
 
-export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export const dynamic = "force-dynamic"
+
+export default async function ClientDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
 
   if (id === "nouveau") {
@@ -24,8 +32,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     notFound()
   }
 
-  const offres = await listOffers(orgId)
-  const clientOffres = offres.filter((o) => o.client_id === id)
+  const allOffers = await listOffers(orgId)
+  const clientOffers = allOffers.filter((o) => o.client_id === id)
 
   return (
     <div className="space-y-6">
@@ -37,104 +45,76 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">{client.company || client.name}</h1>
-          <p className="text-muted-foreground mt-2">{client.tags.join(", ") || "Aucun tag"}</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            {client.company || client.name}
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            {client.tags.length > 0 ? client.tags.join(", ") : "Aucun secteur"}
+          </p>
         </div>
-        <Link href={`/create-offre?client=${client.id}`} className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">Créer une offre</Button>
+        <Link href={`/create-offre?client=${client.id}`}>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Créer une offre
+          </Button>
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Client Info */}
-        <Card className="p-6 lg:col-span-1">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Informations</h2>
-          <div className="space-y-4" role="list">
-            <div className="flex items-start gap-3" role="listitem">
-              <Building2 className="h-5 w-5 text-primary mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Entreprise</p>
-                <p className="text-sm text-muted-foreground">{client.company || client.name}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3" role="listitem">
-              <Mail className="h-5 w-5 text-primary mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Email</p>
-                <a
-                  href={`mailto:${client.email}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {client.email}
-                </a>
-              </div>
-            </div>
-            <div className="flex items-start gap-3" role="listitem">
-              <Phone className="h-5 w-5 text-primary mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Téléphone</p>
-                <a
-                  href={`tel:${client.phone}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {client.phone}
-                </a>
-              </div>
-            </div>
-            <div className="flex items-start gap-3" role="listitem">
-              <Calendar className="h-5 w-5 text-primary mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Client depuis</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(client.created_at).toLocaleDateString("fr-FR")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
+      {/* Layout 2 colonnes */}
+      <div className="grid gap-6 lg:grid-cols-[350px_1fr]">
+        {/* Colonne gauche - Sticky */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <ClientInfoCard client={client} />
+        </div>
 
-        {/* Offres */}
-        <Card className="p-6 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Offres ({clientOffres.length})</h2>
-          <div className="space-y-3" role="list" aria-label="Liste des offres">
-            {clientOffres.length === 0 ? (
-              <div className="text-center py-8">
-                <FileCheck className="h-12 w-12 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
-                <p className="text-sm text-muted-foreground">Aucune offre pour ce client</p>
+        {/* Colonne droite - Tabs */}
+        <div className="space-y-6">
+          <Tabs defaultValue="offres" className="w-full">
+            <TabsList>
+              <TabsTrigger value="offres">
+                Offres ({clientOffers.length})
+              </TabsTrigger>
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="activite">Activité</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="offres" className="mt-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Offres commerciales</h2>
+                  <Link href={`/create-offre?client=${client.id}`}>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Nouvelle offre
+                    </Button>
+                  </Link>
+                </div>
+                <ClientOffersTable offers={clientOffers} />
               </div>
-            ) : (
-              clientOffres.map((offre) => (
-                <Link key={offre.id} href={`/offres/${offre.id}`} role="listitem">
-                  <div className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <FileCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          Offre #{offre.id} - {offre.title || "Sans titre"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(offre.created_at).toLocaleDateString("fr-FR")}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={offre.status === "accepted" ? "default" : offre.status === "sent" ? "default" : "secondary"}
-                      className={offre.status === "accepted" || offre.status === "sent" ? "bg-primary" : ""}
-                    >
-                      {offre.status === "draft"
-                        ? "Brouillon"
-                        : offre.status === "sent"
-                          ? "Envoyée"
-                          : offre.status === "accepted"
-                            ? "Acceptée"
-                            : "Rejetée"}
-                    </Badge>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
-        </Card>
+            </TabsContent>
+
+            <TabsContent value="notes" className="mt-6">
+              <div className="rounded-lg border p-6">
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Notes non disponibles
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    La fonctionnalité de notes sera disponible prochainement
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="activite" className="mt-6">
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">Historique d'activité</h2>
+                <ClientActivityTimeline offers={clientOffers} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   )
