@@ -23,15 +23,23 @@ export async function middleware(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   const hasValidSession = session !== null;
   
+  // Log session user id for debugging (as requested)
   if (process.env.NODE_ENV === 'development') {
+    console.log('[Middleware] Session user id:', session?.user?.id ?? null);
     console.log('[Middleware] Session validation result:', {
       hasValidSession,
       session: session ? { userId: session.user.id, email: session.user.email } : null,
     });
   }
 
-  // Allow authentication routes without any redirection
+  // Handle authentication routes
   if (pathname.startsWith('/authentication/login') || pathname.startsWith('/authentication/register')) {
+    // If user is already authenticated, redirect to dashboard
+    if (hasValidSession) {
+      console.log('[Middleware] Redirecting authenticated user from login to dashboard');
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    // Otherwise, allow access to login/register pages
     return NextResponse.next();
   }
 

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
+import CustomTextField from "@/components/forms/CustomTextField";
 
 interface loginType {
   title?: string;
@@ -78,22 +78,55 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           expiresIn: data.session.expires_in,
         });
         
-        // Check if cookies are set by Supabase
-        console.log('[AuthLogin] Checking cookies after login...');
-        const allCookies = document.cookie.split(';').map(c => c.trim());
-        const supabaseCookies = allCookies.filter(c => 
-          c.includes('supabase') || 
-          c.startsWith('sb-') || 
-          c.includes('auth')
-        );
-        console.log('[AuthLogin] Supabase cookies after login:', supabaseCookies.map(c => c.split('=')[0]));
-        
-        console.log('[AuthLogin] Redirecting to dashboard');
-        // Redirect to dashboard on success
-        router.push("/dashboard");
-        router.refresh();
+        // Exchange tokens for server-side cookies via API endpoint
+        // This ensures the middleware can read the session from cookies
+        console.log('[AuthLogin] Exchanging tokens for server-side cookies...');
+        try {
+          const exchangeResponse = await fetch('/api/auth/exchange', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          });
+
+          if (!exchangeResponse.ok) {
+            const errorData = await exchangeResponse.json();
+            console.error('[AuthLogin] Token exchange failed:', errorData);
+            setError('Failed to synchronize session. Please try again.');
+            setLoading(false);
+            return;
+          }
+
+          console.log('[AuthLogin] Token exchange successful');
+          
+          // Check if cookies are set after exchange
+          console.log('[AuthLogin] Checking cookies after exchange...');
+          const allCookies = document.cookie.split(';').map(c => c.trim());
+          const supabaseCookies = allCookies.filter(c => 
+            c.includes('supabase') || 
+            c.startsWith('sb-') || 
+            c.includes('auth')
+          );
+          console.log('[AuthLogin] Supabase cookies after exchange:', supabaseCookies.map(c => c.split('=')[0]));
+          
+          console.log('[AuthLogin] Redirecting to dashboard');
+          // Redirect to dashboard on success
+          router.push("/dashboard");
+          router.refresh();
+        } catch (exchangeError) {
+          console.error('[AuthLogin] Error during token exchange:', exchangeError);
+          setError('Failed to synchronize session. Please try again.');
+          setLoading(false);
+          return;
+        }
       } else {
         console.warn('[AuthLogin] No session returned in data object');
+        setError('No session returned. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
       console.error('[AuthLogin] Unexpected error:', err);

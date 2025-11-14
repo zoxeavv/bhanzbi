@@ -1,29 +1,33 @@
-import { NextResponse } from "next/server"
-import { dataStore } from "@/lib/data-store"
+import { NextResponse } from "next/server";
+import { getCurrentOrgId } from "@/lib/auth/session";
+import { getOfferById } from "@/lib/db/queries/offers";
+import { getTemplateById } from "@/lib/db/queries/templates";
+import { getClientById } from "@/lib/db/queries/clients";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const offre = await dataStore.getOffre(params.id)
-    if (!offre) {
-      return NextResponse.json({ error: "Offre not found" }, { status: 404 })
-    }
-
-    const template = await dataStore.getTemplate(offre.template_id)
-    const client = await dataStore.getClient(offre.client_id)
+    const orgId = await getCurrentOrgId();
+    const { id } = await params;
+    
+    const offer = await getOfferById(id, orgId);
+    const template = offer.template_id ? await getTemplateById(offer.template_id, orgId) : null;
+    const client = await getClientById(offer.client_id, orgId);
 
     // Simulation de génération PDF
     const pdfContent = `
       OFFRE COMMERCIALE
       
-      Client: ${client?.company_name}
-      Contact: ${client?.contact_name}
+      Client: ${client?.company || client?.name}
+      Contact: ${client?.name}
       
-      Template: ${template?.name}
+      Template: ${template?.title || "N/A"}
       
-      Données:
-      ${Object.entries(offre.data)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join("\n")}
+      Titre: ${offer.title}
+      Items: ${offer.items.length} article(s)
+      Total: ${(offer.total / 100).toFixed(2)} €
       
       Date: ${new Date().toLocaleDateString("fr-FR")}
     `
@@ -31,7 +35,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return new NextResponse(pdfContent, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="offre-${params.id}.pdf"`,
+        "Content-Disposition": `attachment; filename="offre-${id}.pdf"`,
       },
     })
   } catch (error) {

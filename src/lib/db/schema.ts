@@ -7,6 +7,7 @@ export const offerStatusEnum = pgEnum('offer_status', ['draft', 'sent', 'accepte
 // Tables
 export const clients = pgTable('clients', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  org_id: text('org_id').notNull(),
   name: text('name').notNull(),
   company: text('company').notNull().default(''),
   email: text('email').notNull().default(''),
@@ -18,6 +19,7 @@ export const clients = pgTable('clients', {
 
 export const templates = pgTable('templates', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  org_id: text('org_id').notNull(),
   title: text('title').notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(),
   content: text('content').notNull().default(''),
@@ -29,6 +31,7 @@ export const templates = pgTable('templates', {
 
 export const offers = pgTable('offers', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  org_id: text('org_id').notNull(),
   client_id: text('client_id').notNull().references(() => clients.id),
   template_id: text('template_id').references(() => templates.id),
   title: text('title').notNull(),

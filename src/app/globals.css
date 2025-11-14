@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Base colors - Modernize palette */
+    --background: 0 0% 100%;
+    --foreground: 217 26% 22%;
+    --card: 0 0% 100%;
+    --card-foreground: 217 26% 22%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 26% 22%;
+    
+    /* Primary - Modernize #5D87FF */
+    --primary: 224 100% 68%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Modernize #49BEFF */
+    --secondary: 201 100% 64%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Semantic colors - Modernize palette */
+    --success: 169 84% 47%;
+    --success-foreground: 0 0% 100%;
+    --info: 215 100% 66%;
+    --info-foreground: 0 0% 100%;
+    --warning: 38 100% 56%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 13 93% 70%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Muted & Accent - Modernize greys */
+    --muted: 210 44% 96%;
+    --muted-foreground: 218 19% 44%;
+    --accent: 210 44% 96%;
+    --accent-foreground: 217 26% 22%;
+    
+    /* Borders & Inputs - Modernize greys */
+    --border: 210 24% 92%;
+    --input: 210 24% 92%;
+    --ring: 224 100% 68%;
+    
+    /* Radius - Modernize 7px */
+    --radius: 0.4375rem;
+    
+    /* Modernize grey scale */
+    --grey-100: 210 44% 96%;
+    --grey-200: 210 31% 94%;
+    --grey-300: 218 33% 91%;
+    --grey-400: 216 22% 58%;
+    --grey-500: 218 19% 44%;
+    --grey-600: 217 26% 22%;
+    
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 217 26% 22%;
+    --sidebar-border: 210 24% 92%;
+    --sidebar-accent: 210 44% 96%;
+    --sidebar-accent-foreground: 217 26% 22%;
+  }
+
+  .dark {
+    /* Dark mode - Modernize palette */
+    --background: 217 26% 22%;
+    --foreground: 210 44% 96%;
+    --card: 217 26% 22%;
+    --card-foreground: 210 44% 96%;
+    --popover: 217 26% 22%;
+    --popover-foreground: 210 44% 96%;
+    
+    /* Primary - same blue in dark mode */
+    --primary: 224 100% 68%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Modernize #49BEFF */
+    --secondary: 201 100% 64%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Semantic colors - slightly adjusted for dark mode */
+    --success: 169 84% 47%;
+    --success-foreground: 0 0% 100%;
+    --info: 215 100% 66%;
+    --info-foreground: 0 0% 100%;
+    --warning: 38 100% 56%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 13 93% 70%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Muted & Accent - darker greys */
+    --muted: 217 26% 22%;
+    --muted-foreground: 216 22% 58%;
+    --accent: 217 26% 22%;
+    --accent-foreground: 210 44% 96%;
+    
+    /* Borders & Inputs */
+    --border: 216 22% 58%;
+    --input: 216 22% 58%;
+    --ring: 224 100% 68%;
+    
+    /* Sidebar colors - dark mode */
+    --sidebar-background: 217 26% 22%;
+    --sidebar-foreground: 210 44% 96%;
+    --sidebar-border: 216 22% 58%;
+    --sidebar-accent: 216 22% 58%;
+    --sidebar-accent-foreground: 210 44% 96%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif !important;
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+

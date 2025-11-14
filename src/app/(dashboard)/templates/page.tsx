@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, FileText, Calendar, Settings } from "lucide-react"
-import { dataStore } from "@/lib/data-store"
 import { EmptyState } from "@/components/empty-state"
 import { toast } from "sonner"
-import type { Template } from "@/lib/types"
+import type { Template } from "@/types/domain"
 import { Input } from "@/components/ui/input"
 
 export default function TemplatesPage() {
@@ -20,7 +19,9 @@ export default function TemplatesPage() {
   useEffect(() => {
     async function loadTemplates() {
       try {
-        const data = await dataStore.getTemplates()
+        const res = await fetch("/api/templates")
+        if (!res.ok) throw new Error("Failed to fetch templates")
+        const data = await res.json()
         setTemplates(data)
       } catch (error) {
         console.error("Error loading templates:", error)
@@ -33,7 +34,7 @@ export default function TemplatesPage() {
   }, [])
 
   const filteredTemplates = templates.filter((template) =>
-    template.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    template.title.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   return (
@@ -93,11 +94,13 @@ export default function TemplatesPage() {
                     <div className="flex items-start justify-between">
                       <div className="space-y-2 flex-1">
                         <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                          {template.name}
+                          {template.title}
                         </h3>
-                        <Badge variant="secondary" className="text-xs">
-                          {template.mapping_json?.length || 0} champs
-                        </Badge>
+                        {template.tags.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {template.tags.length} tag{template.tags.length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
                       </div>
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
@@ -107,10 +110,12 @@ export default function TemplatesPage() {
                       <Calendar className="h-4 w-4" />
                       <span>{new Date(template.created_at).toLocaleDateString("fr-FR")}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Settings className="h-4 w-4" />
-                      <span>Mapping configuré</span>
-                    </div>
+                    {template.category && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Settings className="h-4 w-4" />
+                        <span>{template.category}</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </Link>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { importClientsFromCSV } from '@/app/(DashboardLayout)/clients/import/actions';
+import { importClientsFromCSV } from '@/lib/actions/clients';
 
 interface ClientsImportProps {
   onImport?: (file: File) => Promise<void>;

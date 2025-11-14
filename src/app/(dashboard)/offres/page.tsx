@@ -6,35 +6,44 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, FileCheck, Building2, FileText, Calendar } from "lucide-react"
-import { dataStore } from "@/lib/data-store"
 import { EmptyState } from "@/components/empty-state"
 import { toast } from "sonner"
-import type { Offre, Client, Template } from "@/lib/types"
+import type { Offer, Client, Template } from "@/types/domain"
 import { Input } from "@/components/ui/input"
 
-type OffreWithDetails = Offre & {
+type OfferWithDetails = Offer & {
   client?: Client
   template?: Template
 }
 
 export default function OffresPage() {
-  const [offres, setOffres] = useState<OffreWithDetails[]>([])
+  const [offres, setOffres] = useState<OfferWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     async function loadOffres() {
       try {
-        const [offresData, clients, templates] = await Promise.all([
-          dataStore.getOffres(),
-          dataStore.getClients(),
-          dataStore.getTemplates(),
+        const [offresRes, clientsRes, templatesRes] = await Promise.all([
+          fetch("/api/offres"),
+          fetch("/api/clients"),
+          fetch("/api/templates"),
         ])
 
-        const offresWithDetails = offresData.map((offre) => ({
+        if (!offresRes.ok || !clientsRes.ok || !templatesRes.ok) {
+          throw new Error("Failed to fetch data")
+        }
+
+        const [offresData, clients, templates] = await Promise.all([
+          offresRes.json(),
+          clientsRes.json(),
+          templatesRes.json(),
+        ])
+
+        const offresWithDetails = offresData.map((offre: Offer) => ({
           ...offre,
-          client: clients.find((c) => c.id === offre.client_id),
-          template: templates.find((t) => t.id === offre.template_id),
+          client: clients.find((c: Client) => c.id === offre.client_id),
+          template: templates.find((t: Template) => t.id === offre.template_id),
         }))
 
         setOffres(offresWithDetails)
@@ -51,15 +60,16 @@ export default function OffresPage() {
   const filteredOffres = offres.filter(
     (offre) =>
       offre.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      offre.client?.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      offre.data?.poste?.toLowerCase().includes(searchQuery.toLowerCase()),
+      offre.client?.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      offre.title.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   function getStatusBadge(status: string) {
     const variants: Record<string, { variant: "default" | "secondary" | "outline"; label: string }> = {
       draft: { variant: "secondary", label: "Brouillon" },
-      validated: { variant: "default", label: "Validée" },
-      downloaded: { variant: "outline", label: "Téléchargée" },
+      sent: { variant: "default", label: "Envoyée" },
+      accepted: { variant: "default", label: "Acceptée" },
+      rejected: { variant: "outline", label: "Rejetée" },
     }
     const config = variants[status] || variants.draft
     return <Badge variant={config.variant}>{config.label}</Badge>
@@ -129,7 +139,7 @@ export default function OffresPage() {
                           {getStatusBadge(offre.status)}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {offre.data?.poste || "Sans titre"}
+                          {offre.title || "Sans titre"}
                         </p>
                       </div>
                       <FileCheck className="h-5 w-5 text-muted-foreground" />
@@ -138,11 +148,11 @@ export default function OffresPage() {
                   <CardContent className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
-                      <span className="truncate">{offre.client?.company_name || "Client inconnu"}</span>
+                      <span className="truncate">{offre.client?.company || offre.client?.name || "Client inconnu"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <FileText className="h-4 w-4" />
-                      <span className="truncate">{offre.template?.name || "Template inconnu"}</span>
+                      <span className="truncate">{offre.template?.title || "Template inconnu"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />

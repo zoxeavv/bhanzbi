@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Mail, Phone, Building2, Calendar, FileCheck } from "lucide-react"
-import { dataStore } from "@/lib/data-store"
+import { getClientById } from "@/lib/db/queries/clients"
+import { listOffers } from "@/lib/db/queries/offers"
+import { getCurrentOrgId } from "@/lib/auth/session"
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,13 +15,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     return null
   }
 
-  const client = await dataStore.getClient(id)
+  const orgId = await getCurrentOrgId()
 
-  if (!client) {
+  let client
+  try {
+    client = await getClientById(id, orgId)
+  } catch (error) {
     notFound()
   }
 
-  const offres = await dataStore.getOffres()
+  const offres = await listOffers(orgId)
   const clientOffres = offres.filter((o) => o.client_id === id)
 
   return (
@@ -32,8 +37,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">{client.company_name}</h1>
-          <p className="text-muted-foreground mt-2">{client.secteur}</p>
+          <h1 className="text-3xl font-bold text-foreground">{client.company || client.name}</h1>
+          <p className="text-muted-foreground mt-2">{client.tags.join(", ") || "Aucun tag"}</p>
         </div>
         <Link href={`/create-offre?client=${client.id}`} className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto">Créer une offre</Button>
@@ -49,7 +54,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <Building2 className="h-5 w-5 text-primary mt-0.5" aria-hidden="true" />
               <div>
                 <p className="text-sm font-medium text-foreground">Entreprise</p>
-                <p className="text-sm text-muted-foreground">{client.company_name}</p>
+                <p className="text-sm text-muted-foreground">{client.company || client.name}</p>
               </div>
             </div>
             <div className="flex items-start gap-3" role="listitem">
@@ -105,7 +110,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       <FileCheck className="h-5 w-5 text-primary" aria-hidden="true" />
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          Offre #{offre.id} - {offre.data.poste || "Sans titre"}
+                          Offre #{offre.id} - {offre.title || "Sans titre"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(offre.created_at).toLocaleDateString("fr-FR")}
@@ -113,14 +118,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       </div>
                     </div>
                     <Badge
-                      variant={offre.status === "validated" ? "default" : "secondary"}
-                      className={offre.status === "validated" ? "bg-primary" : ""}
+                      variant={offre.status === "accepted" ? "default" : offre.status === "sent" ? "default" : "secondary"}
+                      className={offre.status === "accepted" || offre.status === "sent" ? "bg-primary" : ""}
                     >
                       {offre.status === "draft"
                         ? "Brouillon"
-                        : offre.status === "validated"
-                          ? "Validée"
-                          : "Téléchargée"}
+                        : offre.status === "sent"
+                          ? "Envoyée"
+                          : offre.status === "accepted"
+                            ? "Acceptée"
+                            : "Rejetée"}
                     </Badge>
                   </div>
                 </Link>

@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { offers } from '../schema';
 import type { Offer, OfferItem } from '@/types/domain';
@@ -24,8 +24,12 @@ function normalizeNumber(num: string | null | undefined, defaultValue: number = 
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
-export async function listOffers(): Promise<Offer[]> {
-  const results = await db.select().from(offers).orderBy(desc(offers.created_at));
+export async function listOffers(orgId: string): Promise<Offer[]> {
+  if (!orgId) throw new Error('orgId is required');
+  const results = await db.select()
+    .from(offers)
+    .where(eq(offers.org_id, orgId))
+    .orderBy(desc(offers.created_at));
   
   return results.map((row) => ({
     id: row.id,
@@ -43,8 +47,12 @@ export async function listOffers(): Promise<Offer[]> {
   }));
 }
 
-export async function getOfferById(id: string): Promise<Offer> {
-  const result = await db.select().from(offers).where(eq(offers.id, id)).limit(1);
+export async function getOfferById(id: string, orgId: string): Promise<Offer> {
+  if (!orgId) throw new Error('orgId is required');
+  const result = await db.select()
+    .from(offers)
+    .where(and(eq(offers.id, id), eq(offers.org_id, orgId)))
+    .limit(1);
   const row = firstOrError(result[0], `Offer not found: ${id}`);
   
   return {
@@ -64,6 +72,7 @@ export async function getOfferById(id: string): Promise<Offer> {
 }
 
 export async function createOffer(data: {
+  orgId: string;
   client_id: string;
   template_id?: string | null;
   title: string;
@@ -74,7 +83,9 @@ export async function createOffer(data: {
   total: number;
   status?: 'draft' | 'sent' | 'accepted' | 'rejected';
 }): Promise<Offer> {
+  if (!data.orgId) throw new Error('orgId is required');
   const result = await db.insert(offers).values({
+    org_id: data.orgId,
     client_id: data.client_id,
     template_id: data.template_id ?? null,
     title: data.title,
@@ -104,7 +115,7 @@ export async function createOffer(data: {
   };
 }
 
-export async function updateOffer(id: string, data: {
+export async function updateOffer(id: string, orgId: string, data: {
   title?: string;
   items?: OfferItem[];
   subtotal?: number;
@@ -113,6 +124,7 @@ export async function updateOffer(id: string, data: {
   total?: number;
   status?: 'draft' | 'sent' | 'accepted' | 'rejected';
 }): Promise<Offer> {
+  if (!orgId) throw new Error('orgId is required');
   const updateData: Partial<typeof offers.$inferInsert> = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.items !== undefined) updateData.items = normalizeArray(data.items);
@@ -124,7 +136,7 @@ export async function updateOffer(id: string, data: {
   
   const result = await db.update(offers)
     .set(updateData)
-    .where(eq(offers.id, id))
+    .where(and(eq(offers.id, id), eq(offers.org_id, orgId)))
     .returning();
   
   const row = firstOrError(result[0], `Offer not found: ${id}`);
@@ -143,6 +155,38 @@ export async function updateOffer(id: string, data: {
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
   };
+}
+
+export async function countOffers(orgId: string): Promise<number> {
+  if (!orgId) throw new Error('orgId is required');
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(offers)
+    .where(eq(offers.org_id, orgId));
+  return Number(result[0]?.count ?? 0);
+}
+
+export async function getRecentOffers(orgId: string, limit: number = 10): Promise<Offer[]> {
+  if (!orgId) throw new Error('orgId is required');
+  const results = await db.select()
+    .from(offers)
+    .where(eq(offers.org_id, orgId))
+    .orderBy(desc(offers.created_at))
+    .limit(limit);
+  
+  return results.map((row) => ({
+    id: row.id,
+    client_id: row.client_id,
+    template_id: row.template_id ?? null,
+    title: normalizeString(row.title),
+    items: normalizeArray(row.items),
+    subtotal: Math.round(normalizeNumber(row.subtotal)),
+    tax_rate: normalizeNumber(row.tax_rate),
+    tax_amount: Math.round(normalizeNumber(row.tax_amount)),
+    total: Math.round(normalizeNumber(row.total)),
+    status: row.status as 'draft' | 'sent' | 'accepted' | 'rejected',
+    created_at: row.created_at.toISOString(),
+    updated_at: row.updated_at.toISOString(),
+  }));
 }
 
 
