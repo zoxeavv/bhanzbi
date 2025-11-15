@@ -178,3 +178,4 @@ Une fois MCP Supabase configuré, vous pourrez utiliser les outils MCP pour :
 - Vérifier les policies RLS
 - Inspecter les contraintes et indexes
 
+

@@ -79,3 +79,4 @@ CREATE TYPE offer_status AS ENUM ('draft', 'sent', 'accepted', 'rejected');
 3. ⚠️ **Exécuter `scripts/inspect-db-schema.sql` sur Supabase**
 4. ⚠️ **Comparer résultats avec Drizzle et corriger écarts si nécessaire**
 
+

@@ -202,3 +202,4 @@ ORDER BY tablename;
 -- Les policies utilisent toutes public.org_id() pour le filtrage multi-tenant.
 -- La policy INSERT pour offers vérifie aussi que le client appartient à la même org.
 
+

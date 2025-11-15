@@ -151,3 +151,4 @@ Pour toute question ou problème, consultez :
 - `docs/audits/PERSISTENCE_AUDIT_COMPLETE.md` - Audit complet de persistance
 - `drizzle/0002_enable_rls.sql` - Migration RLS originale
 
+
