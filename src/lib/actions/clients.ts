@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/db/queries/clients';
 import { getCurrentOrgId } from '@/lib/auth/session';
+import { parseTags } from '@/lib/utils/tags';
 
 interface CSVRow {
   name?: string;
@@ -18,30 +19,29 @@ function parseCSV(content: string): CSVRow[] {
   const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   const rows: CSVRow[] = [];
 
+  // Clés valides de CSVRow pour vérification de type
+  const validKeys: Array<keyof CSVRow> = ['name', 'company', 'email', 'phone', 'tags'];
+
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',');
-    const row: CSVRow = {};
+    const row: Partial<CSVRow> = {};
     
     headers.forEach((header, index) => {
       const value = values[index]?.trim();
-      if (value) {
-        if (header === 'tags') {
-          row.tags = value;
-        } else {
-          (row as any)[header] = value;
-        }
+      if (!value) return;
+
+      // Vérifier que le header est une clé valide de CSVRow
+      if (validKeys.includes(header as keyof CSVRow)) {
+        const key = header as keyof CSVRow;
+        // TypeScript nécessite cette assertion car on vérifie dynamiquement
+        row[key] = value as CSVRow[keyof CSVRow];
       }
     });
     
-    rows.push(row);
+    rows.push(row as CSVRow);
   }
 
   return rows;
-}
-
-function parseTags(tagsStr: string | undefined): string[] {
-  if (!tagsStr) return [];
-  return tagsStr.split('|').map(t => t.trim()).filter(Boolean);
 }
 
 export async function importClientsFromCSV(file: File): Promise<{

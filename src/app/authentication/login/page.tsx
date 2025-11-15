@@ -1,95 +1,55 @@
 "use client";
 import Link from "next/link";
-import { Grid, Box, Card, Stack, Typography } from "@mui/material";
-// components
+import { Suspense } from "react";
 import PageContainer from "@/components/shared/PageContainer";
 import Logo from "@/components/shared/Logo";
 import AuthLogin from "../auth/AuthLogin";
+import { Card } from "@/components/ui/card";
 
 const Login2 = () => {
   return (
     <PageContainer title="Login" description="this is Login page">
-      <Box
-        sx={{
-          position: "relative",
-          "&:before": {
-            content: '""',
+      <div className="relative min-h-screen">
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
             background: "radial-gradient(#d2f1df, #d3d7fa, #bad8f4)",
             backgroundSize: "400% 400%",
             animation: "gradient 15s ease infinite",
-            position: "absolute",
-            height: "100%",
-            width: "100%",
-            opacity: "0.3",
-          },
-        }}
-      >
-        <Grid
-          container
-          spacing={0}
-          justifyContent="center"
-          sx={{ height: "100vh" }}
-        >
-          <Grid
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            size={{
-              xs: 12,
-              sm: 12,
-              lg: 4,
-              xl: 3
-            }}>
-            <Card
-              elevation={9}
-              sx={{ p: 4, zIndex: 1, width: "100%", maxWidth: "500px" }}
-            >
-              <Box display="flex" alignItems="center" justifyContent="center">
+          }}
+        />
+        <div className="relative flex min-h-screen items-center justify-center p-4">
+          <div className="w-full max-w-[500px]">
+            <Card className="relative z-10 p-6 shadow-lg">
+              <div className="flex items-center justify-center mb-6">
                 <Logo />
-              </Box>
-              <AuthLogin
-                subtext={
-                  <Typography
-                    variant="subtitle1"
-                    textAlign="center"
-                    color="textSecondary"
-                    mb={1}
-                  >
-                    Your Social Campaigns
-                  </Typography>
-                }
-                subtitle={
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    justifyContent="center"
-                    mt={3}
-                  >
-                    <Typography
-                      color="textSecondary"
-                      variant="h6"
-                      fontWeight="500"
-                    >
-                      New to Modernize?
-                    </Typography>
-                    <Typography
-                      component={Link}
-                      href="/authentication/register"
-                      fontWeight="500"
-                      sx={{
-                        textDecoration: "none",
-                        color: "primary.main",
-                      }}
-                    >
-                      Create an account
-                    </Typography>
-                  </Stack>
-                }
-              />
+              </div>
+              <Suspense fallback={<div>Chargement...</div>}>
+                <AuthLogin
+                  subtext={
+                    <p className="text-center text-sm text-muted-foreground mb-1">
+                      Your Social Campaigns
+                    </p>
+                  }
+                  subtitle={
+                    <div className="flex items-center justify-center gap-1 mt-6">
+                      <p className="text-muted-foreground text-base font-medium">
+                        New to Modernize?
+                      </p>
+                      <Link
+                        href="/authentication/register"
+                        className="text-primary font-medium hover:underline"
+                      >
+                        Create an account
+                      </Link>
+                    </div>
+                  }
+                />
+              </Suspense>
             </Card>
-          </Grid>
-        </Grid>
-      </Box>
+          </div>
+        </div>
+      </div>
     </PageContainer>
   );
 };

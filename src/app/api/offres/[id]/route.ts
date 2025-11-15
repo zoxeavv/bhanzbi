@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentOrgId } from "@/lib/auth/session";
+import { getCurrentOrgId, requireSession } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/permissions";
 import { getOfferById, updateOffer } from "@/lib/db/queries/offers";
 import { createOfferSchema } from "@/lib/validations";
 import { z } from "zod";
@@ -31,9 +32,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireSession(); // ✅ Protection explicite pour modification d'offre legacy
     const orgId = await getCurrentOrgId();
     const { id } = await params;
     const body = await request.json();
+    
+    // Si changement de statut, vérifier les permissions admin
+    if (body.status !== undefined) {
+      await requireAdmin(); // ✅ Protection admin pour changement de statut
+    }
     
     const validatedData = createOfferSchema.partial().parse(body);
     

@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { SidebarNav } from "./SidebarNav"
 import { useState, useEffect } from "react"
+import type { Role } from "@/types/domain"
 
 interface SidebarProps {
   className?: string
+  userRole?: Role
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, userRole }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -68,7 +70,7 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Zone Nav Principale */}
           <div className="flex-1 overflow-y-auto px-3 py-4">
-            <SidebarNav />
+            <SidebarNav userRole={userRole} />
           </div>
 
           {/* Zone Nav Future - Réservée pour extensions futures */}

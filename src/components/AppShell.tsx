@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/sidebar/Sidebar"
 import { Topbar } from "@/components/topbar/Topbar"
 import { BreadcrumbItem } from "@/components/topbar/Breadcrumb"
 import { cn } from "@/lib/utils"
+import type { Role } from "@/types/domain"
 
 interface AppShellProps {
   children: React.ReactNode
@@ -15,6 +16,7 @@ interface AppShellProps {
   userAvatar?: string
   orgName?: string
   orgId?: string
+  userRole?: Role
   className?: string
 }
 
@@ -29,12 +31,13 @@ export function AppShell({
   userAvatar,
   orgName,
   orgId,
+  userRole,
   className,
 }: AppShellProps) {
   return (
     <div className={cn("flex min-h-screen w-full", className)}>
       {/* Sidebar fixe */}
-      <Sidebar />
+      <Sidebar userRole={userRole} />
 
       {/* Zone principale avec topbar et contenu */}
       <div className="flex flex-1 flex-col md:ml-64">

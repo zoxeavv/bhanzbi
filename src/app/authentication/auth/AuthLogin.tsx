@@ -1,20 +1,11 @@
 "use client";
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  FormGroup,
-  FormControlLabel,
-  Button,
-  Stack,
-  Checkbox,
-  Alert,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-
-import CustomTextField from "@/components/forms/CustomTextField";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface loginType {
   title?: string;
@@ -24,10 +15,24 @@ interface loginType {
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
+
+  // Lire le paramètre error de l'URL
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "unauthorized") {
+      setUrlError("Vous n'avez pas les droits pour accéder à cette page.");
+    } else if (errorParam === "session") {
+      setUrlError("Votre session a expiré, veuillez vous reconnecter.");
+    } else {
+      setUrlError(null);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,100 +143,86 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   return (
     <>
       {title ? (
-        <Typography fontWeight="700" variant="h2" mb={1}>
+        <h2 className="font-bold text-3xl mb-1">
           {title}
-        </Typography>
+        </h2>
       ) : null}
 
       {subtext}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+      {urlError && (
+        <div className="mb-2 rounded-md border border-warning/50 bg-warning/10 px-4 py-3 text-sm text-warning-foreground">
+          {urlError}
+        </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <Stack>
-          <Box>
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              component="label"
-              htmlFor="email"
-              mb="5px"
-            >
+      {error && (
+        <div className="mb-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-semibold">
               Email
-            </Typography>
-            <CustomTextField
+            </Label>
+            <Input
               id="email"
               type="email"
-              variant="outlined"
-              fullWidth
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
               disabled={loading}
+              className="w-full"
             />
-          </Box>
-          <Box mt="25px">
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              component="label"
-              htmlFor="password"
-              mb="5px"
-            >
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-semibold">
               Password
-            </Typography>
-            <CustomTextField
+            </Label>
+            <Input
               id="password"
               type="password"
-              variant="outlined"
-              fullWidth
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               required
               disabled={loading}
+              className="w-full"
             />
-          </Box>
-          <Stack
-            justifyContent="space-between"
-            direction="row"
-            alignItems="center"
-            my={2}
-          >
-            <FormGroup>
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Remeber this Device"
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <input
+                id="remember"
+                type="checkbox"
+                defaultChecked
+                className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
               />
-            </FormGroup>
-            <Typography
-              component={Link}
+              <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+                Remeber this Device
+              </Label>
+            </div>
+            <Link
               href="/"
-              fontWeight="500"
-              sx={{
-                textDecoration: "none",
-                color: "primary.main",
-              }}
+              className="text-sm font-medium text-primary hover:underline"
             >
               Forgot Password ?
-            </Typography>
-          </Stack>
-        </Stack>
-        <Box>
-          <Button
-            color="primary"
-            variant="contained"
-            size="large"
-            fullWidth
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? "Signing In..." : "Sign In"}
-          </Button>
-        </Box>
+            </Link>
+          </div>
+        </div>
+        
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          size="lg"
+        >
+          {loading ? "Signing In..." : "Sign In"}
+        </Button>
       </form>
       {subtitle}
     </>

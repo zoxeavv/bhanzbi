@@ -1,68 +1,46 @@
 import { NextResponse } from "next/server";
-import { getCurrentOrgId } from "@/lib/auth/session";
-import { listOffers, createOffer } from "@/lib/db/queries/offers";
-import { createOfferSchema } from "@/lib/validations";
-import { z } from "zod";
+import type { NextRequest } from "next/server";
+// TODO: supprimer cette route legacy une fois le front migré vers /api/offers
+// Cette route est un proxy vers /api/offers pour maintenir la compatibilité avec le frontend existant
+import { GET as getOffers, POST as postOffer } from "../offers/route";
+import { limitRequest } from "@/lib/api/ratelimit";
 
-export async function GET() {
-  try {
-    const orgId = await getCurrentOrgId();
-    const offers = await listOffers(orgId);
-    return NextResponse.json(offers);
-  } catch (error) {
-    if (error instanceof Error && (error.message === 'Unauthorized' || error.message.includes('Organization ID'))) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    console.error('[GET /api/offres] Error:', error);
+/**
+ * Helper pour vérifier le rate limiting et retourner 429 si nécessaire
+ */
+async function checkRateLimit(request: Request | NextRequest): Promise<NextResponse | null> {
+  const rateLimitResult = await limitRequest(request, 'offers');
+  if (!rateLimitResult.ok) {
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Too many requests' },
+      { status: 429 }
     );
   }
+  return null;
 }
 
+/**
+ * GET /api/offres (legacy)
+ * 
+ * Proxy vers GET /api/offers pour maintenir la compatibilité.
+ * TODO: supprimer cette route une fois le front migré vers /api/offers
+ */
+export async function GET(request: NextRequest) {
+  const rateLimitError = await checkRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+  
+  return getOffers(request);
+}
+
+/**
+ * POST /api/offres (legacy)
+ * 
+ * Proxy vers POST /api/offers pour maintenir la compatibilité.
+ * TODO: supprimer cette route une fois le front migré vers /api/offers
+ */
 export async function POST(request: Request) {
-  try {
-    const orgId = await getCurrentOrgId();
-    const body = await request.json();
-    const validatedData = createOfferSchema.parse(body);
-
-    const offer = await createOffer({
-      orgId,
-      client_id: validatedData.client_id,
-      template_id: validatedData.template_id ?? null,
-      title: validatedData.title,
-      items: validatedData.items,
-      subtotal: validatedData.subtotal,
-      tax_rate: validatedData.tax_rate,
-      tax_amount: validatedData.tax_amount,
-      total: validatedData.total,
-      status: validatedData.status,
-    });
-
-    return NextResponse.json(offer, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error && (error.message === 'Unauthorized' || error.message.includes('Organization ID'))) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
-    }
-
-    console.error('[POST /api/offres] Error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+  const rateLimitError = await checkRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+  
+  return postOffer(request);
 }

@@ -1,12 +1,9 @@
 "use client";
 import React, { useState } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-
-import CustomTextField from '@/components/forms/CustomTextField';
-import { Stack } from '@mui/system';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface registerType {
     title?: string;
@@ -33,52 +30,59 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         setLoading(true);
 
         try {
-            console.log('[AuthRegister] Calling supabase.auth.signUp...');
-            const { data, error: signUpError } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        display_name: name,
-                    },
+            console.log('[AuthRegister] Calling /api/auth/register...');
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    display_name: name,
+                }),
             });
 
-            console.log('[AuthRegister] Supabase signUp response:', {
-                hasData: !!data,
-                hasError: !!signUpError,
-                error: signUpError ? {
-                    message: signUpError.message,
-                    status: signUpError.status,
-                    name: signUpError.name,
-                } : null,
-                user: data?.user ? {
-                    id: data.user.id,
-                    email: data.user.email,
-                    created_at: data.user.created_at,
-                } : null,
-                session: data?.session ? {
-                    access_token: data.session.access_token ? 'present' : 'missing',
-                    expires_at: data.session.expires_at,
+            const result = await response.json();
+
+            console.log('[AuthRegister] API response:', {
+                status: response.status,
+                hasError: !!result.error,
+                hasUser: !!result.user,
+                error: result.error || null,
+                user: result.user ? {
+                    id: result.user.id,
+                    email: result.user.email,
+                    created_at: result.user.created_at,
                 } : null,
             });
 
-            if (signUpError) {
-                console.error('[AuthRegister] SignUp error:', signUpError);
-                setError(signUpError.message || "Failed to create account. Please try again.");
+            if (!response.ok || result.error) {
+                console.error('[AuthRegister] Registration error:', result.error);
+                
+                // Gérer spécifiquement le cas où l'email n'est pas autorisé
+                if (result.error === 'EMAIL_NOT_ALLOWED') {
+                    setError(result.message || "Cet email n'est pas autorisé à créer un compte. Contactez un administrateur.");
+                } else {
+                    // Autres erreurs (validation, serveur, etc.)
+                    setError(result.error || result.message || "Failed to create account. Please try again.");
+                }
+                
                 setLoading(false);
                 return;
             }
 
-            if (data.user) {
-                console.log('[AuthRegister] User created successfully:', data.user.id);
+            if (result.user) {
+                console.log('[AuthRegister] User created successfully:', result.user.id);
                 setSuccess(true);
                 // Redirect to login page after a short delay
                 setTimeout(() => {
                     router.push("/authentication/login");
                 }, 2000);
             } else {
-                console.warn('[AuthRegister] No user returned in data object');
+                console.warn('[AuthRegister] No user returned in response');
+                setError("Account creation completed but no user data returned.");
+                setLoading(false);
             }
         } catch (err) {
             console.error('[AuthRegister] Unexpected error:', err);
@@ -90,78 +94,82 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     return (
         <>
             {title ? (
-                <Typography fontWeight="700" variant="h2" mb={1}>
+                <h2 className="font-bold text-3xl mb-1">
                     {title}
-                </Typography>
+                </h2>
             ) : null}
 
             {subtext}
 
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <div className="mb-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground">
                     {error}
-                </Alert>
+                </div>
             )}
 
             {success && (
-                <Alert severity="success" sx={{ mb: 2 }}>
+                <div className="mb-2 rounded-md border border-success/50 bg-success/10 px-4 py-3 text-sm text-success-foreground">
                     Account created successfully! Redirecting to login...
-                </Alert>
+                </div>
             )}
 
-            <form onSubmit={handleSubmit}>
-                <Box>
-                    <Stack mb={3}>
-                        <Typography variant="subtitle1"
-                            fontWeight={600} component="label" htmlFor='name' mb="5px">Name</Typography>
-                        <CustomTextField
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="name" className="text-sm font-semibold">
+                            Name
+                        </Label>
+                        <Input
                             id="name"
-                            variant="outlined"
-                            fullWidth
+                            type="text"
                             value={name}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                             required
                             disabled={loading || success}
+                            className="w-full"
                         />
+                    </div>
 
-                        <Typography variant="subtitle1"
-                            fontWeight={600} component="label" htmlFor='email' mb="5px" mt="25px">Email Address</Typography>
-                        <CustomTextField
+                    <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-semibold">
+                            Email Address
+                        </Label>
+                        <Input
                             id="email"
                             type="email"
-                            variant="outlined"
-                            fullWidth
                             value={email}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                             required
                             disabled={loading || success}
+                            className="w-full"
                         />
+                    </div>
 
-                        <Typography variant="subtitle1"
-                            fontWeight={600} component="label" htmlFor='password' mb="5px" mt="25px">Password</Typography>
-                        <CustomTextField
+                    <div className="space-y-2">
+                        <Label htmlFor="password" className="text-sm font-semibold">
+                            Password
+                        </Label>
+                        <Input
                             id="password"
                             type="password"
-                            variant="outlined"
-                            fullWidth
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             required
+                            minLength={6}
                             disabled={loading || success}
-                            inputProps={{ minLength: 6 }}
+                            className="w-full"
                         />
-                    </Stack>
-                    <Button
-                        color="primary"
-                        variant="contained"
-                        size="large"
-                        fullWidth
-                        type="submit"
-                        disabled={loading || success}
-                    >
-                        {loading ? "Creating Account..." : success ? "Account Created!" : "Sign Up"}
-                    </Button>
-                </Box>
+                    </div>
+                </div>
+                
+                <Button
+                    type="submit"
+                    disabled={loading || success}
+                    className="w-full"
+                    size="lg"
+                >
+                    {loading ? "Creating Account..." : success ? "Account Created!" : "Sign Up"}
+                </Button>
             </form>
             {subtitle}
         </>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentOrgId } from "@/lib/auth/session";
+import { getCurrentOrgId, requireSession } from "@/lib/auth/session";
 import { getOfferById, updateOffer } from "@/lib/db/queries/offers";
 import { getClientById } from "@/lib/db/queries/clients";
 import { getTemplateById } from "@/lib/db/queries/templates";
@@ -7,6 +7,7 @@ import { generateOffrePDF, generateSignedUrl } from "@/lib/pdf-generator";
 
 export async function POST(request: Request) {
   try {
+    await requireSession(); // ✅ Protection explicite pour génération PDF
     const orgId = await getCurrentOrgId();
     const { offreId } = await request.json();
 

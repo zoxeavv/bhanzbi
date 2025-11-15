@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { templateContentSchema, validateTemplateContent } from "@/lib/templates/schema"
 
 export const clientSchema = z.object({
   company_name: z.string().min(2, "Le nom de l'entreprise doit contenir au moins 2 caractères"),
@@ -20,15 +21,38 @@ export const offreSchema = z.object({
 })
 
 // Schema for API client creation/update (matches Drizzle schema)
-export const createClientSchema = z.object({
+// Ce schéma est la source de vérité pour la validation côté backend et frontend
+// 
+// SÉCURITÉ : Ce schéma NE DOIT JAMAIS contenir org_id - il vient toujours de getCurrentOrgId()
+// 
+// NOTE : Ce schéma correspond exactement aux champs présents dans le schéma DB clients :
+// - id (généré automatiquement)
+// - org_id (vient de getCurrentOrgId(), jamais du client)
+// - name, company, email, phone, tags, created_at, updated_at
+
+// Schéma de base (sans transformations) - peut être étendu avec .extend()
+export const baseClientSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  company: z.string().optional(),
-  email: z.union([
-    z.string().email("Email invalide"),
-    z.literal(""),
-  ]).optional(),
+  company_name: z.string().optional(), // Alias pour company (pour compatibilité API)
+  company: z.string().optional(), // Champ DB réel
+  email: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().optional(),
   tags: z.array(z.string()).optional(),
+});
+
+// Schéma avec transformations pour l'API
+export const createClientSchema = baseClientSchema.refine(
+  (data) => {
+    // Soit company_name, soit company doit être fourni (ou les deux, on prend company en priorité)
+    return true; // Pour l'instant, on accepte les deux ou aucun
+  },
+  { message: "Au moins un champ company ou company_name doit être fourni" }
+).transform((data) => {
+  // Normaliser : si company_name est fourni mais pas company, utiliser company_name
+  if (data.company_name && !data.company) {
+    return { ...data, company: data.company_name };
+  }
+  return data;
 });
 
 // Schema for API offer creation (matches Drizzle schema)
@@ -54,7 +78,35 @@ export const createOfferSchema = z.object({
 export const createTemplateSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   slug: z.string().min(1, "Le slug est requis"),
-  content: z.string().optional(),
+  content: z
+    .string()
+    .optional()
+    .transform((val) => {
+      // Normaliser le contenu : null/empty → JSON stringifié de { fields: [] }
+      if (!val || val.trim() === "") {
+        return JSON.stringify({ fields: [] });
+      }
+      return val;
+    })
+    .refine(
+      (val) => {
+        // Valider que le contenu est un JSON valide correspondant à TemplateContent
+        const validated = validateTemplateContent(val);
+        return validated !== null;
+      },
+      {
+        message: "Le contenu doit être un JSON valide avec une structure { fields: [...] }",
+      }
+    )
+    .transform((val) => {
+      // Normaliser le JSON (réordonner les champs, supprimer les valeurs invalides)
+      const validated = validateTemplateContent(val);
+      if (validated) {
+        return JSON.stringify(validated);
+      }
+      // Ne devrait jamais arriver ici car le refine a déjà validé
+      return val;
+    }),
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });

@@ -8,29 +8,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Building2, User, Mail, Phone, Tag } from "lucide-react"
+import { parseTags } from "@/lib/utils/tags"
+import { baseClientSchema } from "@/lib/validations"
+import { handleClientError } from "@/lib/utils/error-handling"
 
-// Schéma de validation pour le formulaire
-const clientFormSchema = z.object({
-  name: z.string().min(1, "Le nom du contact est requis").min(2, "Le nom doit contenir au moins 2 caractères"),
-  company: z.string().min(1, "Le nom de l'entreprise est requis").min(2, "Le nom de l'entreprise doit contenir au moins 2 caractères"),
-  email: z
-    .string()
-    .optional()
-    .refine((val) => !val || val === "" || z.string().email().safeParse(val).success, {
-      message: "Email invalide",
-    }),
-  phone: z.string().optional(),
+// Schéma de validation pour le formulaire (basé sur baseClientSchema avec transformation des tags)
+const clientFormSchema = baseClientSchema.extend({
   tags: z
     .string()
     .optional()
-    .transform((val) => {
-      if (!val || val.trim() === "") return []
-      // Séparer par virgule ou pipe et nettoyer
-      return val
-        .split(/[,|]/)
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-    }),
+    .transform((val) => parseTags(val || "")),
 })
 
 export type ClientFormData = z.infer<typeof clientFormSchema>
@@ -75,17 +62,11 @@ export function ClientForm({
       await onSubmit(data)
     } catch (error) {
       // Gestion d'erreurs générales
-      if (error instanceof Error) {
-        setError("root", {
-          type: "manual",
-          message: error.message,
-        })
-      } else {
-        setError("root", {
-          type: "manual",
-          message: "Une erreur est survenue lors de la création du client",
-        })
-      }
+      const errorMessage = handleClientError(error, "submitClientForm")
+      setError("root", {
+        type: "manual",
+        message: errorMessage,
+      })
     }
   }
 

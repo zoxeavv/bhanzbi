@@ -2,12 +2,27 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
+import { limitRequest } from '@/lib/api/ratelimit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
+}
+
+/**
+ * Helper pour vérifier le rate limiting et retourner 429 si nécessaire
+ */
+async function checkRateLimit(request: NextRequest): Promise<NextResponse | null> {
+  const rateLimitResult = await limitRequest(request, 'auth-exchange');
+  if (!rateLimitResult.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429 }
+    );
+  }
+  return null;
 }
 
 /**
@@ -26,6 +41,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Pattern: Client login → Exchange tokens → Cookies set → Middleware can validate
  */
 export async function POST(request: NextRequest) {
+  const rateLimitError = await checkRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = await request.json();
     const { access_token, refresh_token } = body;
@@ -40,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Create response first so we can set cookies on it
     const response = NextResponse.json({ ok: true });
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Create server client with cookie handling
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {

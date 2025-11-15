@@ -19,14 +19,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * import { createSupabaseServerClient } from '@/lib/supabase/server';
  * 
  * export async function GET(request: Request) {
- *   const supabase = createSupabaseServerClient();
+ *   const supabase = await createSupabaseServerClient();
  *   const { data: { session } } = await supabase.auth.getSession();
  *   // ...
  * }
  * ```
  */
-export function createSupabaseServerClient(): SupabaseClient {
-  const cookieStore = cookies();
+export async function createSupabaseServerClient(): Promise<SupabaseClient> {
+  const cookieStore = await cookies();
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

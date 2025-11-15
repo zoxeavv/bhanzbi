@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
-import type { Session, User } from '@/types/domain';
+import type { Session, User, Role } from '@/types/domain';
 import type { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { DEFAULT_ORG_ID } from '@/lib/config/org';
 
 
 function getSupabaseConfig() {
@@ -21,19 +22,26 @@ function getSupabaseConfig() {
  * This ensures the JWT is valid and not expired, unlike getSession().
  * Returns null if user is not authenticated or JWT is invalid.
  */
-async function getAuthenticatedUser(): Promise<{ id: string; email: string; org_id?: string } | null> {
+async function getAuthenticatedUser(): Promise<{ id: string; email: string; org_id?: string; role?: Role } | null> {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
       return null;
     }
 
+    // IMPORTANT : ne jamais fallback automatiquement à ADMIN, le rôle doit être explicitement défini dans user_metadata.
+    // Si user_metadata?.role est défini ET correspond au type Role → l'utiliser, sinon → undefined
+    const role = user.user_metadata?.role as Role | undefined;
+    // Valider que le rôle est bien un Role valide si défini
+    const validRole: Role | undefined = (role === "ADMIN" || role === "USER") ? role : undefined;
+
     return {
       id: user.id,
       email: user.email ?? '',
       org_id: user.user_metadata?.org_id,
+      role: validRole,
     };
   } catch (error) {
     return null;
@@ -44,7 +52,7 @@ async function getAuthenticatedUser(): Promise<{ id: string; email: string; org_
  * Get the authenticated user from a NextRequest (for middleware).
  * Uses getUser() for proper JWT validation.
  */
-async function getAuthenticatedUserFromRequest(request: NextRequest): Promise<{ id: string; email: string; org_id?: string } | null> {
+async function getAuthenticatedUserFromRequest(request: NextRequest): Promise<{ id: string; email: string; org_id?: string; role?: Role } | null> {
   try {
     const { url, key } = getSupabaseConfig();
     
@@ -84,10 +92,17 @@ async function getAuthenticatedUserFromRequest(request: NextRequest): Promise<{ 
       return null;
     }
 
+    // IMPORTANT : ne jamais fallback automatiquement à ADMIN, le rôle doit être explicitement défini dans user_metadata.
+    // Si user_metadata?.role est défini ET correspond au type Role → l'utiliser, sinon → undefined
+    const role = user.user_metadata?.role as Role | undefined;
+    // Valider que le rôle est bien un Role valide si défini
+    const validRole: Role | undefined = (role === "ADMIN" || role === "USER") ? role : undefined;
+
     return {
       id: user.id,
       email: user.email ?? '',
       org_id: user.user_metadata?.org_id,
+      role: validRole,
     };
   } catch (error) {
     return null;
@@ -111,6 +126,7 @@ export async function getSession(): Promise<Session> {
       id: user.id,
       email: user.email,
       org_id: user.org_id,
+      role: user.role,
     };
 
     return {
@@ -139,6 +155,7 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
       id: user.id,
       email: user.email,
       org_id: user.org_id,
+      role: user.role,
     };
 
     return {
@@ -160,13 +177,57 @@ export async function requireSession(): Promise<{ user: User; orgId?: string }> 
 
 /**
  * Get the current organization ID from the session.
- * Throws if no session or org_id is missing.
+ * 
+ * CONTEXTE MULTI-TENANT / MONO-TENANT :
+ * 
+ * Le système est architecturé en multi-tenant strict avec org_id et getCurrentOrgId().
+ * Cependant, en pratique produit actuelle, on n'a qu'une seule organisation et qu'un rôle ADMIN.
+ * 
+ * Ce fonctionnement "mono-tenant sur infra multi-tenant" permet de :
+ * - Conserver l'architecture multi-tenant pour une évolution future
+ * - Simplifier la gestion en production avec une seule organisation
+ * - Centraliser la source de vérité de l'orgId dans cette fonction
+ * 
+ * IMPORTANT :
+ * - Cette fonction est la SEULE source de vérité pour l'orgId dans le code de production
+ * - Toutes les queries DB multi-tenant doivent utiliser l'orgId fourni par cette fonction
+ * - Aucun org_id ne doit être hardcodé ailleurs (sauf dans les tests/seeding)
+ * 
+ * FALLBACK MONO-TENANT (optionnel) :
+ * 
+ * Si la session n'a pas d'orgId et que DEFAULT_ORG_ID est défini dans les variables
+ * d'environnement, cette fonction utilisera cette valeur par défaut.
+ * 
+ * Pour activer le mode mono-tenant en production :
+ * 1. Définir DEFAULT_ORG_ID dans .env.production ou les variables d'environnement
+ * 2. S'assurer que tous les utilisateurs ont le même org_id dans user_metadata
+ *    OU laisser cette fonction utiliser le fallback DEFAULT_ORG_ID
+ * 
+ * @example
+ * // En production mono-tenant, dans .env.production :
+ * DEFAULT_ORG_ID=org-default-prod
+ * 
+ * // Tous les appels à getCurrentOrgId() retourneront 'org-default-prod'
+ * // si l'utilisateur n'a pas d'org_id dans sa session
+ * 
+ * @returns L'orgId de la session utilisateur, ou DEFAULT_ORG_ID si défini et session.orgId manquant
+ * @throws Error si aucune session ou si orgId manquant ET DEFAULT_ORG_ID non défini
  */
 export async function getCurrentOrgId(): Promise<string> {
   const session = await requireSession();
-  if (!session.orgId) {
-    throw new Error('Organization ID not found in session');
+  
+  // Si la session a un orgId, l'utiliser (comportement normal multi-tenant)
+  if (session.orgId) {
+    return session.orgId;
   }
-  return session.orgId;
+  
+  // Fallback optionnel pour mode mono-tenant en production
+  // Si DEFAULT_ORG_ID est défini, l'utiliser comme fallback
+  if (DEFAULT_ORG_ID) {
+    return DEFAULT_ORG_ID;
+  }
+  
+  // Si ni session.orgId ni DEFAULT_ORG_ID, throw une erreur
+  throw new Error('Organization ID not found in session and DEFAULT_ORG_ID is not configured');
 }
 

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, numeric, varchar, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, numeric, varchar, pgEnum, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Enums
@@ -13,21 +13,25 @@ export const clients = pgTable('clients', {
   email: text('email').notNull().default(''),
   phone: text('phone').notNull().default(''),
   tags: jsonb('tags').$type<string[]>().notNull().default([]),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const templates = pgTable('templates', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   org_id: text('org_id').notNull(),
   title: text('title').notNull(),
-  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  slug: varchar('slug', { length: 255 }).notNull(),
   content: text('content').notNull().default(''),
+  template_kind: varchar('template_kind', { length: 50 }).notNull().default('GENERIC'),
   category: text('category').notNull().default(''),
   tags: jsonb('tags').$type<string[]>().notNull().default([]),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Contrainte unique composite sur (org_id, slug) pour garantir l'unicité au niveau organisationnel
+  templatesOrgIdSlugUnique: uniqueIndex('templates_org_id_slug_unique').on(table.org_id, table.slug),
+}));
 
 export const offers = pgTable('offers', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -47,30 +51,19 @@ export const offers = pgTable('offers', {
   tax_amount: numeric('tax_amount', { precision: 10, scale: 2 }).notNull().default('0'),
   total: numeric('total', { precision: 10, scale: 2 }).notNull().default('0'),
   status: offerStatusEnum('status').notNull().default('draft'),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// CRM users table (if needed for auth)
-export const crm_users = pgTable('crm_users', {
+// Table des emails autorisés pour les admins
+export const admin_allowed_emails = pgTable('admin_allowed_emails', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  email: text('email').notNull().unique(),
-  org_id: text('org_id'),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
-
-// Trigger function for updated_at (can be created via migration)
-// CREATE OR REPLACE FUNCTION update_updated_at_column()
-// RETURNS TRIGGER AS $$
-// BEGIN
-//   NEW.updated_at = NOW();
-//   RETURN NEW;
-// END;
-// $$ language 'plpgsql';
-
-// CREATE TRIGGER update_clients_updated_at BEFORE UPDATE ON clients
-//   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-// (same for templates, offers, crm_users)
-
-
+  org_id: text('org_id').notNull(),
+  email: text('email').notNull(),
+  created_by: text('created_by').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  used_at: timestamp('used_at', { withTimezone: true }),
+}, (table) => ({
+  // Contrainte unique composite sur (org_id, email) pour garantir l'unicité au niveau organisationnel
+  adminAllowedEmailsOrgIdEmailUnique: uniqueIndex('admin_allowed_emails_org_id_email_unique').on(table.org_id, table.email),
+}));

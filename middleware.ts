@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Debug: Log cookies received by middleware (dev only)
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     const cookies = request.cookies.getAll();
     const cookieNames = cookies.map(c => c.name);
     const supabaseCookieNames = cookieNames.filter(name => 
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   const hasValidSession = session !== null;
   
   // Log session user id for debugging (as requested)
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     console.log('[Middleware] Session user id:', session?.user?.id ?? null);
     console.log('[Middleware] Session validation result:', {
       hasValidSession,
@@ -36,7 +36,9 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/authentication/login') || pathname.startsWith('/authentication/register')) {
     // If user is already authenticated, redirect to dashboard
     if (hasValidSession) {
-      console.log('[Middleware] Redirecting authenticated user from login to dashboard');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Middleware] Redirecting authenticated user from login to dashboard');
+      }
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     // Otherwise, allow access to login/register pages
@@ -46,8 +48,10 @@ export async function middleware(request: NextRequest) {
   // Protect dashboard routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/clients') || pathname.startsWith('/offers') || pathname.startsWith('/templates')) {
     if (!hasValidSession) {
-      console.log('[Middleware] Redirecting to login - no valid session');
-      return NextResponse.redirect(new URL('/authentication/login', request.url));
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Middleware] Redirecting to login - no valid session');
+      }
+      return NextResponse.redirect(new URL('/authentication/login?error=session', request.url));
     }
   }
 

@@ -1,14 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Mail, Phone, Building2, Calendar, Tag } from "lucide-react"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Client } from "@/types/domain"
+import { formatDate } from "@/lib/utils/date"
+import { handleClientError } from "@/lib/utils/error-handling"
 
 interface ClientInfoCardProps {
   client: Client
@@ -17,25 +18,20 @@ interface ClientInfoCardProps {
 
 export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
   const router = useRouter()
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return "Date invalide"
-      return format(date, "dd MMMM yyyy", { locale: fr })
-    } catch {
-      return "Date invalide"
-    }
-  }
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleEdit = () => {
     router.push(`/clients/${client.id}?edit=true`)
   }
 
   const handleDelete = async () => {
+    if (isDeleting) return
+
     if (!confirm(`Êtes-vous sûr de vouloir supprimer ${client.company || client.name} ?`)) {
       return
     }
+
+    setIsDeleting(true)
 
     if (onDelete) {
       try {
@@ -43,8 +39,10 @@ export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
         toast.success("Client supprimé avec succès")
         router.push("/clients")
       } catch (error) {
-        console.error("Error deleting client:", error)
-        toast.error("Erreur lors de la suppression du client")
+        const errorMessage = handleClientError(error, "deleteClient")
+        toast.error(errorMessage)
+      } finally {
+        setIsDeleting(false)
       }
     } else {
       // Fallback: appel API direct
@@ -54,14 +52,19 @@ export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
         })
 
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Client introuvable ou vous n'avez pas les droits")
+          }
           throw new Error("Erreur lors de la suppression")
         }
 
         toast.success("Client supprimé avec succès")
         router.push("/clients")
       } catch (error) {
-        console.error("Error deleting client:", error)
-        toast.error("Erreur lors de la suppression du client")
+        const errorMessage = handleClientError(error, "deleteClient")
+        toast.error(errorMessage)
+      } finally {
+        setIsDeleting(false)
       }
     }
   }
@@ -123,7 +126,7 @@ export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">Client depuis</p>
               <p className="text-sm text-muted-foreground">
-                {formatDate(client.created_at)}
+                {formatDate(client.created_at, "dd MMMM yyyy")}
               </p>
             </div>
           </div>
@@ -147,7 +150,7 @@ export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
 
         {/* Actions */}
         <div className="flex flex-col gap-2 pt-4 border-t">
-          <Button onClick={handleEdit} variant="outline" className="w-full">
+          <Button onClick={handleEdit} variant="outline" className="w-full" disabled={isDeleting}>
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
@@ -155,9 +158,10 @@ export function ClientInfoCard({ client, onDelete }: ClientInfoCardProps) {
             onClick={handleDelete}
             variant="outline"
             className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            disabled={isDeleting}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
+            {isDeleting ? "Suppression..." : "Supprimer"}
           </Button>
         </div>
       </CardContent>

@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Users, FileText, FileCheck } from "lucide-react"
+import { LayoutDashboard, Users, FileText, FileCheck, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { Role } from "@/types/domain"
 
 export interface NavItem {
   name: string
@@ -21,14 +22,26 @@ const mainNavigation: NavItem[] = [
 interface SidebarNavProps {
   items?: NavItem[]
   className?: string
+  userRole?: Role
 }
 
-export function SidebarNav({ items = mainNavigation, className }: SidebarNavProps) {
+export function SidebarNav({ items = mainNavigation, className, userRole }: SidebarNavProps) {
   const pathname = usePathname()
+
+  // Construire la liste des items de navigation
+  // Ajouter Settings uniquement si l'utilisateur est ADMIN
+  const navigationItems: NavItem[] = [...items]
+  if (userRole === "ADMIN") {
+    navigationItems.push({
+      name: "Settings",
+      href: "/settings/admins",
+      icon: Settings,
+    })
+  }
 
   return (
     <nav className={cn("space-y-1", className)}>
-      {items.map((item) => {
+      {navigationItems.map((item) => {
         const isActive =
           pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
         return (

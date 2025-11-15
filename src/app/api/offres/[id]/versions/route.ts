@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentOrgId } from "@/lib/auth/session";
+import { getCurrentOrgId, requireSession } from "@/lib/auth/session";
 import { getOfferById } from "@/lib/db/queries/offers";
 
 export async function GET(
@@ -30,6 +30,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireSession(); // ✅ Protection explicite pour création de version legacy
     const orgId = await getCurrentOrgId();
     const { id } = await params;
     

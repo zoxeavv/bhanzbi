@@ -3,9 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { CheckCircle2, FileText, FileCheck, Clock } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { fr } from "date-fns/locale"
 import type { Offer } from "@/types/domain"
+import { formatRelativeDate } from "@/lib/utils/date"
 
 interface ActivityItem {
   id: string
@@ -41,16 +40,6 @@ const typeBgColors = {
 }
 
 export function ClientActivityTimeline({ offers }: ClientActivityTimelineProps) {
-  const formatTime = (timestamp: string) => {
-    try {
-      const date = new Date(timestamp)
-      if (isNaN(date.getTime())) return "Date invalide"
-      return formatDistanceToNow(date, { addSuffix: true, locale: fr })
-    } catch {
-      return "Date invalide"
-    }
-  }
-
   // Générer les activités depuis les offres
   const activities: ActivityItem[] = offers.flatMap((offer) => {
     const items: ActivityItem[] = [
@@ -154,7 +143,7 @@ export function ClientActivityTimeline({ offers }: ClientActivityTimelineProps) 
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatTime(item.timestamp)}
+                        {formatRelativeDate(item.timestamp)}
                       </span>
                     </div>
                   </div>

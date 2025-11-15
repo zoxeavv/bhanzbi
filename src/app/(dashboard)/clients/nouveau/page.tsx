@@ -1,91 +1,31 @@
-"use client"
+import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/permissions";
+import { NewClientForm } from "./NewClientForm";
 
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
-import { ClientForm, type ClientFormData } from "@/components/clients/ClientForm"
-import { toast } from "sonner"
+export const dynamic = "force-dynamic";
 
-export default function NewClientPage() {
-  const router = useRouter()
-
-  const handleSubmit = async (data: ClientFormData) => {
-    try {
-      // Transformer les données pour l'API
-      const apiData = {
-        name: data.name,
-        company: data.company,
-        email: data.email || "",
-        phone: data.phone || "",
-        tags: data.tags || [],
-      }
-
-      const response = await fetch("/api/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        
-        // Si c'est une erreur de validation Zod, afficher les détails
-        if (errorData.details && Array.isArray(errorData.details)) {
-          const firstError = errorData.details[0]
-          throw new Error(firstError.message || "Erreur de validation")
-        }
-        
-        throw new Error(errorData.error || "Erreur lors de la création du client")
-      }
-
-      const client = await response.json()
-
-      toast.success("Client créé avec succès")
-      router.push(`/clients/${client.id}`)
-      router.refresh()
-    } catch (error) {
-      // L'erreur sera gérée par le formulaire via setError
-      throw error
+/**
+ * Page Server Component pour la création d'un nouveau client
+ * 
+ * SÉCURITÉ :
+ * - Protégée par requireAdmin() (seuls les admins peuvent créer des clients)
+ * - Redirige vers /authentication/login?error=unauthorized si non autorisé
+ */
+export default async function NewClientPage() {
+  try {
+    // Vérifier les permissions admin
+    await requireAdmin();
+    
+    return <NewClientForm />;
+  } catch (error) {
+    // En cas d'erreur (ex: non authentifié ou non admin), rediriger vers la page de connexion
+    if (error instanceof Error && (error.message === 'Unauthorized' || error.message === 'User role not defined' || error.message.includes('Organization ID'))) {
+      console.error('[NewClientPage] Unauthorized:', error);
+      redirect('/authentication/login?error=unauthorized');
     }
+    
+    // Pour les autres erreurs, rediriger vers le dashboard avec message d'erreur
+    console.error('[NewClientPage] Error:', error);
+    redirect('/dashboard?error=client_creation_failed');
   }
-
-  const handleCancel = () => {
-    router.push("/clients")
-  }
-
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] py-8">
-      <div className="w-full max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/clients">
-            <Button variant="ghost" size="icon" aria-label="Retour aux clients">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Nouveau client</h1>
-            <p className="text-muted-foreground mt-2">
-              Ajoutez un nouveau client à votre portefeuille
-            </p>
-          </div>
-        </div>
-
-        {/* Formulaire dans une card centrée */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations du client</CardTitle>
-            <CardDescription>
-              Remplissez les informations pour créer un nouveau client
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ClientForm onSubmit={handleSubmit} onCancel={handleCancel} />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
 }
