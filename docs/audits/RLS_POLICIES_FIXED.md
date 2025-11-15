@@ -120,3 +120,4 @@ Si certaines policies sont encore manquantes après la migration 0009 :
 
 **Prochaine étape**: Exécuter `scripts/final-rls-verification.sql` pour confirmer que toutes les policies sont présentes.
 
+

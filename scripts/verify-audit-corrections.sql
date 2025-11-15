@@ -198,3 +198,4 @@ SELECT
     ELSE '❌ Valeurs manquantes'
   END;
 
+

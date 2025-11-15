@@ -279,3 +279,4 @@ if (require.main === module) {
 
 export { extractDrizzleSchema, analyzeMigrations, generateReport };
 
+

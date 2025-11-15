@@ -129,3 +129,4 @@ WHERE schemaname = 'public'
   AND tablename IN ('clients', 'templates', 'offers')
 ORDER BY tablename, cmd, policyname;
 
+
