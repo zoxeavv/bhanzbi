@@ -138,3 +138,4 @@ La migration `0009_force_create_missing_policies.sql` :
 
 **Action immédiate**: Appliquer la migration `0009_force_create_missing_policies.sql` pour forcer la création de toutes les policies.
 
+

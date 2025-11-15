@@ -417,3 +417,4 @@ Le système de persistance est **globalement cohérent** avec une architecture m
 
 **Fin de l'audit**
 
+
