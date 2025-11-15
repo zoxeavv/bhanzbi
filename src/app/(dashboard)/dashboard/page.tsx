@@ -120,24 +120,17 @@ export default function DashboardPage() {
       {/* Page Header */}
       <PageHeader title="Dashboard" />
 
-      {/* Stats Section - Grid responsive 3-4 colonnes */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            title={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            change={stat.change}
-            href={stat.href}
-          />
-        ))}
-      </div>
+      {/* Section KPI */}
+      <StatsGrid />
 
-      {/* Analytics Sections - 2 colonnes desktop, 1 mobile */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Pipeline + Activity */}
+      <div className="grid gap-6 lg:grid-cols-3">
         <PipelinePerformanceCard />
         <RecentActivityCard />
+      </div>
+
+      {/* Tasks + Quick actions */}
+      <div className="grid gap-6 lg:grid-cols-3">
         <TasksCard />
         <QuickActionsCard />
       </div>
@@ -146,22 +139,41 @@ export default function DashboardPage() {
 }
 
 
+function StatsGrid() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {stats.map((stat) => (
+        <StatCard
+          key={stat.label}
+          title={stat.label}
+          value={stat.value}
+          icon={stat.icon}
+          change={stat.change}
+          href={stat.href}
+        />
+      ))}
+    </div>
+  );
+}
+
 function PipelinePerformanceCard() {
   return (
-    <Card className="rounded-lg">
-      <CardHeader className="p-6">
-        <CardTitle className="text-3xl font-semibold">Pipeline Performance</CardTitle>
-        <CardDescription className="text-muted-foreground">Last 30 days</CardDescription>
+    <Card className="lg:col-span-2 rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="pb-6 px-6 pt-6">
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold">Pipeline Performance</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Last 30 days</CardDescription>
+        </div>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <p className="text-4xl font-bold tracking-tight text-foreground">$125,430</p>
+      <CardContent className="flex flex-col gap-6 px-6 pb-6">
+        <div className="flex items-end gap-3">
+          <p className="text-4xl font-bold tracking-tight text-foreground">$125,430</p>
+          <div className="flex items-center gap-1 pb-1">
             <span className="text-sm font-medium text-success">+15.7%</span>
           </div>
-          {/* Graph placeholder */}
-          <div className="h-64 rounded-lg bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5" />
         </div>
+        {/* Graph placeholder – tu pourras plugger un vrai chart plus tard */}
+        <div className="h-64 rounded-lg bg-gradient-to-t from-primary/5 via-primary/10 to-primary/5" />
       </CardContent>
     </Card>
   );
@@ -169,29 +181,27 @@ function PipelinePerformanceCard() {
 
 function RecentActivityCard() {
   return (
-    <Card className="rounded-lg">
-      <CardHeader className="p-6">
-        <CardTitle className="text-3xl font-semibold">Recent Activity</CardTitle>
+    <Card className="rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="pb-6 px-6 pt-6">
+        <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="space-y-6 px-6 pb-6">
         {activities.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">No recent activity</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4">
-                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", activity.iconBg)}>
-                  {activity.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground leading-snug">{activity.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{activity.meta}</p>
-                </div>
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-4">
+              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", activity.iconBg)}>
+                {activity.icon}
               </div>
-            ))}
-          </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-snug text-foreground">{activity.title}</p>
+                <p className="text-xs text-muted-foreground">{activity.meta}</p>
+              </div>
+            </div>
+          ))
         )}
       </CardContent>
     </Card>
@@ -200,49 +210,51 @@ function RecentActivityCard() {
 
 function TasksCard() {
   return (
-    <Card className="rounded-lg">
-      <CardHeader className="flex flex-row items-start justify-between p-6">
+    <Card className="lg:col-span-2 rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 px-6 pt-6">
         <div className="space-y-1">
-          <CardTitle className="text-3xl font-semibold">Your Tasks</CardTitle>
-          <CardDescription className="text-muted-foreground">Keep track of your most important follow-ups.</CardDescription>
+          <CardTitle className="text-lg font-semibold">Your Tasks</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Keep track of your most important follow-ups.</CardDescription>
         </div>
-        <Button size="sm" className="gap-1.5 shrink-0">
+        <Button size="sm" className="gap-1">
           <UserPlus className="h-[18px] w-[18px] stroke-[2]" />
           <span>Add Task</span>
         </Button>
       </CardHeader>
-      <CardContent className="p-6">
-        {/* Tabs visuels */}
-        <div className="border-b border-border pb-4 mb-6">
+      <CardContent className="px-6 pb-6">
+        {/* Tabs "fake" visuels, sans logique pour rester server-side */}
+        <div className="border-b border-border pb-4">
           <nav className="-mb-px flex space-x-6 text-sm">
             <span className="border-b-2 border-primary pb-3 font-medium text-primary">
               All
             </span>
-            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground">
               Today
             </span>
-            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground">
               Overdue
             </span>
           </nav>
         </div>
 
         {tasks.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="mt-6 text-center py-8 text-muted-foreground">
             <p className="text-sm">No tasks yet</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-4 rounded-lg p-3 hover:bg-muted/40 transition-colors cursor-pointer"
+                className="flex items-center gap-4 rounded-lg p-3 hover:bg-muted/60"
               >
                 <Checkbox
                   checked={task.done}
-                  className="shrink-0 h-4 w-4"
+                  // onCheckedChange sera branché avec toggleTask server action plus tard
+                  // onCheckedChange={(checked) => toggleTask(task.id, checked === true)}
+                  className="mt-0.5"
                 />
-                <div className="flex-1 space-y-0.5 min-w-0">
+                <div className="flex-1 space-y-1">
                   <p
                     className={cn(
                       "text-sm font-medium",
@@ -251,7 +263,7 @@ function TasksCard() {
                   >
                     {task.label}
                   </p>
-                  <p className={cn("text-xs text-muted-foreground", task.done && "line-through")}>
+                  <p className="text-xs text-muted-foreground">
                     {task.meta}
                   </p>
                 </div>
@@ -272,7 +284,7 @@ function QuickActionsCard() {
   };
 
   return (
-    <Card className="!rounded-[0.4375rem] !border-border/50 !shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+    <Card className="rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
       <CardHeader className="pb-6 px-6 pt-6">
         <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
       </CardHeader>
@@ -288,10 +300,10 @@ function QuickActionsCard() {
 
           if (href) {
             return (
-              <Link key={action.id} href={href} className="block">
+              <Link key={action.id} href={href}>
                 <Button
                   variant="outline"
-                  className="w-full rounded-[0.4375rem] border-border/50 hover:bg-muted/40 hover:border-border transition-colors"
+                  className="flex w-full items-center justify-center gap-2"
                 >
                   {buttonContent}
                 </Button>
@@ -303,7 +315,7 @@ function QuickActionsCard() {
             <Button
               key={action.id}
               variant="outline"
-              className="w-full rounded-[0.4375rem] border-border/50 hover:bg-muted/40 hover:border-border transition-colors"
+              className="flex w-full items-center justify-center gap-2"
               // onClick sera branché avec les server actions plus tard si nécessaire
             >
               {buttonContent}
