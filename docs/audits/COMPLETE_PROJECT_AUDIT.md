@@ -864,3 +864,4 @@ const clients = await getClientsByIds(clientIds, orgId); // 1 requête avec IN
 
 **Fin de l'audit**
 
+

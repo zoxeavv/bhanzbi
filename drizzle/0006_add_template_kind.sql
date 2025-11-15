@@ -78,3 +78,4 @@ END $$;
 -- 5. To rollback (if needed):
 --    ALTER TABLE templates DROP COLUMN IF EXISTS template_kind;
 
+

@@ -122,3 +122,4 @@ Après application de la migration 0009, tester :
 
 **Action immédiate**: Appliquer la migration `0009_force_create_missing_policies.sql` pour restaurer toutes les policies RLS.
 
+
