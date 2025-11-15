@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ClientsTable } from "./ClientsTable";
 import { ClientsSearchBar } from "./ClientsSearchBar";
 import { deleteClient } from "./ClientDeleteButton";

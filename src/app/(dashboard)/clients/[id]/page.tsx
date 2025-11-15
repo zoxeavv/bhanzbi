@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { FileText, Mail, Phone, Building2, MapPin, CheckCircle2, Calendar } from "lucide-react";
 import { getClientById } from "@/lib/db/queries/clients";
 import { listOffersByClient } from "@/lib/db/queries/offers";

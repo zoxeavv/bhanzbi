@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Plus, Search, FileText } from "lucide-react"
-import { EmptyState } from "@/components/empty-state"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { OffersTable } from "@/components/offres/OffersTable"
 import { toast } from "sonner"
 import type { Offer } from "@/types/domain"
@@ -98,12 +98,12 @@ export default function OffresPage() {
               Gérez vos offres commerciales et suivez leur statut
             </p>
           </div>
-          <Link href="/offres/nouveau">
-            <Button className="gap-2">
+          <Button asChild className="gap-2">
+            <Link href="/offres/nouveau">
               <Plus className="h-4 w-4" />
               Nouvelle offre
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Search et filtres */}

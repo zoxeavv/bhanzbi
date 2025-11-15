@@ -1,223 +1,309 @@
-import { KpiCard } from "@/components/dashboard/KpiCard"
-import { RecentOffersTable } from "@/components/dashboard/RecentOffersTable"
-import { Timeline } from "@/components/dashboard/Timeline"
-import { RecentClients } from "@/components/dashboard/RecentClients"
-import { DateRangePicker } from "@/components/date-range-picker"
-import { Button } from "@/components/ui/button"
-import { Plus, Users, FileText, FileCheck, TrendingUp } from "lucide-react"
-import Link from "next/link"
-import type { DateRange } from "react-day-picker"
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { CheckCircle2, FileText, Send, UserPlus, Users, FileCheck, CheckSquare } from "lucide-react";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { StatCard } from "@/components/ui/StatCard";
+import type { Task } from "@/types/domain";
 
-// Mock data - À remplacer par des appels API réels
-const mockKpis = {
-  totalOffers: 42,
-  totalClients: 18,
-  totalTemplates: 12,
-  totalRevenue: 125000,
+const stats = [
+  {
+    label: "Total Clients",
+    value: "1,204",
+    change: {
+      value: 5.2,
+      label: "vs last month",
+      trend: "up" as const,
+    },
+    icon: <Users className="h-[18px] w-[18px] stroke-[2] text-primary" />,
+    href: "/clients",
+  },
+  {
+    label: "Active Offers",
+    value: "86",
+    change: {
+      value: 1.8,
+      label: "vs last month",
+      trend: "down" as const,
+    },
+    icon: <FileCheck className="h-[18px] w-[18px] stroke-[2] text-primary" />,
+    href: "/offres",
+  },
+  {
+    label: "Pending Tasks",
+    value: "12",
+    change: {
+      value: 10.0,
+      label: "vs last month",
+      trend: "up" as const,
+    },
+    icon: <CheckSquare className="h-[18px] w-[18px] stroke-[2] text-primary" />,
+  },
+];
+
+const activities = [
+  {
+    id: 1,
+    icon: <UserPlus className="h-[18px] w-[18px] stroke-[2] text-info" />,
+    iconBg: "bg-blue-100 dark:bg-blue-900/40",
+    title: "New client 'Innovate Inc' added",
+    meta: "by Jane Smith • 1h ago",
+  },
+  {
+    id: 2,
+    icon: <Send className="h-[18px] w-[18px] stroke-[2] text-success" />,
+    iconBg: "bg-green-100 dark:bg-green-900/40",
+    title: "Offer #1024 sent to 'TechCorp'",
+    meta: "by John Doe • 3h ago",
+  },
+  {
+    id: 3,
+    icon: <CheckCircle2 className="h-[18px] w-[18px] stroke-[2] text-success" />,
+    iconBg: "bg-purple-100 dark:bg-purple-900/40",
+    title: "Task 'Follow up with Innovate Inc' completed",
+    meta: "by Jane Smith • 5h ago",
+  },
+  {
+    id: 4,
+    icon: <FileText className="h-[18px] w-[18px] stroke-[2] text-info" />,
+    iconBg: "bg-yellow-100 dark:bg-yellow-900/40",
+    title: "New template 'SaaS Proposal' created",
+    meta: "by Admin • 1d ago",
+  },
+];
+
+const tasks: Task[] = [
+  {
+    id: "1",
+    label: "Draft Q3 proposal for TechCorp",
+    meta: "Due: Tomorrow • Offer #1024",
+    done: false,
+  },
+  {
+    id: "2",
+    label: "Follow up with Innovate Inc",
+    meta: "Due: Oct 28 • Client: Innovate Inc",
+    done: false,
+  },
+  {
+    id: "3",
+    label: "Send updated invoice to Solutions LLC",
+    meta: "Due: Yesterday",
+    done: true,
+  },
+];
+
+const quickActions = [
+  {
+    id: "create-client",
+    label: "Create Client",
+    icon: <UserPlus className="h-[18px] w-[18px] stroke-[2]" />,
+  },
+  {
+    id: "create-offer",
+    label: "Create Offer",
+    icon: <FileText className="h-[18px] w-[18px] stroke-[2]" />,
+  },
+  {
+    id: "create-template",
+    label: "Create Template",
+    icon: <Send className="h-[18px] w-[18px] stroke-[2]" />,
+  },
+];
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6 p-6">
+      {/* Section KPI */}
+      <StatsGrid />
+
+      {/* Pipeline + Activity */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <PipelinePerformanceCard />
+        <RecentActivityCard />
+      </div>
+
+      {/* Tasks + Quick actions */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <TasksCard />
+        <QuickActionsCard />
+      </div>
+    </div>
+  );
 }
 
-const mockRecentOffers = [
-  {
-    id: "1",
-    title: "Offre Senior Developer",
-    total: 65000,
-    created_at: "2024-12-15T10:30:00Z",
-    clientName: "Acme Corp",
-    status: "sent",
-  },
-  {
-    id: "2",
-    title: "Offre Product Manager",
-    total: 75000,
-    created_at: "2024-12-14T14:20:00Z",
-    clientName: "TechStart",
-    status: "draft",
-  },
-  {
-    id: "3",
-    title: "Offre UX Designer",
-    total: 55000,
-    created_at: "2024-12-13T09:15:00Z",
-    clientName: "DesignCo",
-    status: "accepted",
-  },
-  {
-    id: "4",
-    title: "Offre DevOps Engineer",
-    total: 70000,
-    created_at: "2024-12-12T16:45:00Z",
-    clientName: "CloudSys",
-    status: "sent",
-  },
-  {
-    id: "5",
-    title: "Offre Frontend Developer",
-    total: 60000,
-    created_at: "2024-12-11T11:00:00Z",
-    clientName: "WebAgency",
-    status: "draft",
-  },
-]
+function StatsGrid() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {stats.map((stat) => (
+        <StatCard
+          key={stat.label}
+          title={stat.label}
+          value={stat.value}
+          icon={stat.icon}
+          change={stat.change}
+          href={stat.href}
+        />
+      ))}
+    </div>
+  );
+}
 
-const mockTimeline = [
-  {
-    id: "1",
-    type: "offer_created" as const,
-    title: "Nouvelle offre créée",
-    description: "Offre Senior Developer",
-    timestamp: "2024-12-15T10:30:00Z",
-    user: "Jean Dupont",
-  },
-  {
-    id: "2",
-    type: "offer_sent" as const,
-    title: "Offre envoyée",
-    description: "Offre Product Manager à TechStart",
-    timestamp: "2024-12-14T14:20:00Z",
-    user: "Marie Martin",
-  },
-  {
-    id: "3",
-    type: "client_added" as const,
-    title: "Nouveau client ajouté",
-    description: "DesignCo",
-    timestamp: "2024-12-13T09:15:00Z",
-    user: "Pierre Durand",
-  },
-  {
-    id: "4",
-    type: "template_created" as const,
-    title: "Nouveau template créé",
-    description: "Template Offre Technique",
-    timestamp: "2024-12-12T16:45:00Z",
-    user: "Sophie Bernard",
-  },
-  {
-    id: "5",
-    type: "offer_created" as const,
-    title: "Nouvelle offre créée",
-    description: "Offre DevOps Engineer",
-    timestamp: "2024-12-11T11:00:00Z",
-    user: "Jean Dupont",
-  },
-]
+function PipelinePerformanceCard() {
+  return (
+    <Card className="lg:col-span-2 rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="pb-6 px-6 pt-6">
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold">Pipeline Performance</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Last 30 days</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6 px-6 pb-6">
+        <div className="flex items-end gap-3">
+          <p className="text-4xl font-bold tracking-tight">$125,430</p>
+          <div className="flex items-center gap-1 pb-1">
+            <span className="text-sm font-medium text-success">+15.7%</span>
+          </div>
+        </div>
+        {/* Graph placeholder – tu pourras plugger un vrai chart plus tard */}
+        <div className="h-64 rounded-lg bg-gradient-to-t from-primary/5 via-primary/10 to-primary/5" />
+      </CardContent>
+    </Card>
+  );
+}
 
-const mockRecentClients = [
-  {
-    id: "1",
-    name: "Acme Corp",
-    email: "contact@acme.com",
-    phone: "+33 1 23 45 67 89",
-    company: "Acme Corporation",
-    created_at: "2024-12-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    name: "TechStart",
-    email: "hello@techstart.io",
-    phone: "+33 1 98 76 54 32",
-    company: "TechStart Inc.",
-    created_at: "2024-12-14T14:20:00Z",
-  },
-  {
-    id: "3",
-    name: "DesignCo",
-    email: "info@designco.fr",
-    phone: "+33 1 55 44 33 22",
-    company: "DesignCo Studio",
-    created_at: "2024-12-13T09:15:00Z",
-  },
-  {
-    id: "4",
-    name: "CloudSys",
-    email: "contact@cloudsys.com",
-    phone: "+33 1 11 22 33 44",
-    company: "CloudSys Solutions",
-    created_at: "2024-12-12T16:45:00Z",
-  },
-  {
-    id: "5",
-    name: "WebAgency",
-    email: "hello@webagency.fr",
-    phone: "+33 1 99 88 77 66",
-    company: "WebAgency",
-    created_at: "2024-12-11T11:00:00Z",
-  },
-]
+function RecentActivityCard() {
+  return (
+    <Card className="rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="pb-6 px-6 pt-6">
+        <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6 px-6 pb-6">
+        {activities.map((activity) => (
+          <div key={activity.id} className="flex items-start gap-4">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${activity.iconBg}`}>
+              {activity.icon}
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-snug text-foreground">{activity.title}</p>
+              <p className="text-xs text-muted-foreground">{activity.meta}</p>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
-export default async function DashboardPage() {
-  // TODO: Remplacer par des appels API réels
-  // const data = await getDashboardData()
+function TasksCard() {
+  return (
+    <Card className="lg:col-span-2 rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 px-6 pt-6">
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold">Your Tasks</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Keep track of your most important follow-ups.</CardDescription>
+        </div>
+        <Button size="sm" className="gap-1">
+          <UserPlus className="h-[18px] w-[18px] stroke-[2]" />
+          <span>Add Task</span>
+        </Button>
+      </CardHeader>
+      <CardContent className="px-6 pb-6">
+        {/* Tabs "fake" visuels, sans logique pour rester server-side */}
+        <div className="border-b border-border pb-4">
+          <nav className="-mb-px flex space-x-6 text-sm">
+            <span className="border-b-2 border-primary pb-3 font-medium text-primary">
+              All
+            </span>
+            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground">
+              Today
+            </span>
+            <span className="border-b-2 border-transparent pb-3 font-medium text-muted-foreground">
+              Overdue
+            </span>
+          </nav>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-center gap-4 rounded-lg p-3 hover:bg-muted/60"
+            >
+              <Checkbox
+                checked={task.done}
+                // onCheckedChange sera branché avec toggleTask server action plus tard
+                // onCheckedChange={(checked) => toggleTask(task.id, checked === true)}
+                className="mt-0.5"
+              />
+              <div className="flex-1 space-y-1">
+                <p
+                  className={`text-sm font-medium ${
+                    task.done ? "text-muted-foreground line-through" : "text-foreground"
+                  }`}
+                >
+                  {task.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {task.meta}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuickActionsCard() {
+  const actionRoutes: Record<string, string> = {
+    "create-client": "/clients/nouveau",
+    "create-offer": "/offres/nouveau",
+    "create-template": "/templates/nouveau",
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header avec titre, sous-titre, date range et CTA */}
-      <DashboardHeader />
+    <Card className="rounded-[0.4375rem] border-border/50 shadow-[0_1px_3px_0_rgb(0_0_0_/0.05)]">
+      <CardHeader className="pb-6 px-6 pt-6">
+        <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 px-6 pb-6">
+        {quickActions.map((action) => {
+          const href = actionRoutes[action.id];
+          const buttonContent = (
+            <>
+              {action.icon}
+              <span>{action.label}</span>
+            </>
+          );
 
-      {/* Section KPIs - 4 cards cliquables */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Total des offres"
-          value={mockKpis.totalOffers}
-          change={{
-            value: 12,
-            label: "vs mois dernier",
-            trend: "up",
-          }}
-          icon={<FileCheck className="h-5 w-5 text-primary" />}
-          href="/offres"
-        />
-        <KpiCard
-          title="Clients"
-          value={mockKpis.totalClients}
-          change={{
-            value: 5,
-            label: "vs mois dernier",
-            trend: "up",
-          }}
-          icon={<Users className="h-5 w-5 text-primary" />}
-          href="/clients"
-        />
-        <KpiCard
-          title="Templates"
-          value={mockKpis.totalTemplates}
-          change={{
-            value: 2,
-            label: "vs mois dernier",
-            trend: "up",
-          }}
-          icon={<FileText className="h-5 w-5 text-primary" />}
-          href="/templates"
-        />
-        <KpiCard
-          title="Revenus totaux"
-          value={new Intl.NumberFormat("fr-FR", {
-            style: "currency",
-            currency: "EUR",
-          }).format(mockKpis.totalRevenue)}
-          change={{
-            value: 8,
-            label: "vs mois dernier",
-            trend: "up",
-          }}
-          icon={<TrendingUp className="h-5 w-5 text-primary" />}
-        />
-      </div>
+          if (href) {
+            return (
+              <Link key={action.id} href={href}>
+                <Button
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-2"
+                >
+                  {buttonContent}
+                </Button>
+              </Link>
+            );
+          }
 
-      {/* Grille principale : Offres récentes + Timeline */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Section Offres récentes */}
-        <RecentOffersTable offers={mockRecentOffers} maxItems={5} />
-
-        {/* Section Activité récente (Timeline) */}
-        <Timeline items={mockTimeline} maxItems={10} />
-      </div>
-
-      {/* Section Clients récents */}
-      <RecentClients clients={mockRecentClients} maxItems={5} />
-    </div>
-  )
+          return (
+            <Button
+              key={action.id}
+              variant="outline"
+              className="flex w-full items-center justify-center gap-2"
+              // onClick sera branché avec les server actions plus tard si nécessaire
+            >
+              {buttonContent}
+            </Button>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
 }

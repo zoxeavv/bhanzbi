@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import type { Offer } from "@/types/domain"
 
@@ -19,6 +20,7 @@ interface OfferRowActionsProps {
 export function OfferRowActions({ offer }: OfferRowActionsProps) {
   const router = useRouter()
 
+  // handleView reste pour le dropdown menu (navigation programmatique)
   const handleView = () => {
     router.push(`/offres/${offer.id}`)
   }

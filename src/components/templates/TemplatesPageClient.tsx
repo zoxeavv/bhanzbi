@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Plus, FileText, Search } from "lucide-react"
-import { EmptyState } from "@/components/empty-state"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { TemplateCard } from "@/components/templates/TemplateCard"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Toolbar } from "@/components/ui/Toolbar"

@@ -77,5 +77,15 @@ export type Session = {
   orgId?: string;
 } | null;
 
-
+export type Task = {
+  id: string;
+  label: string;
+  meta: string;
+  done: boolean;
+  due_date?: string;
+  client_id?: string;
+  offer_id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
 

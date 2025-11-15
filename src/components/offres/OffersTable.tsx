@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import {
@@ -33,6 +34,8 @@ const statusConfig = {
 }
 
 export function OffersTable({ offers }: OffersTableProps) {
+  const router = useRouter()
+  
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString)
@@ -85,7 +88,7 @@ export function OffersTable({ offers }: OffersTableProps) {
                 "cursor-pointer hover:bg-muted/50 transition-colors"
               )}
               onClick={() => {
-                window.location.href = `/offres/${offer.id}`
+                router.push(`/offres/${offer.id}`)
               }}
             >
               <TableCell className="font-mono text-sm text-muted-foreground">
