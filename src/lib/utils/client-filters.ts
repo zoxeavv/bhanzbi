@@ -39,3 +39,4 @@ export function extractSectorsFromClients(clients: ClientWithOffersCount[]): str
 }
 
 
+

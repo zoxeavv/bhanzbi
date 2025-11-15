@@ -420,3 +420,4 @@ Le système de persistance est globalement cohérent avec une architecture multi
 
 **Note**: Cet audit est basé sur l'analyse du code source et des migrations. Pour une vérification complète, il est nécessaire d'exécuter les scripts SQL d'inspection (`inspect-db-schema.sql`, `inspect-rls-policies.sql`) directement sur Supabase.
 
+

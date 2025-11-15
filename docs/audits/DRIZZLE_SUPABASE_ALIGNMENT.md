@@ -304,3 +304,4 @@ CREATE TYPE offer_status AS ENUM ('draft', 'sent', 'accepted', 'rejected');
 
 **Note**: Cette analyse est basée sur le code source et les migrations. Une vérification directe en DB est nécessaire pour confirmer l'alignement complet. Utiliser `scripts/inspect-db-schema.sql` et `scripts/inspect-rls-policies.sql` pour la vérification finale.
 
+

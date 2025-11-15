@@ -290,3 +290,4 @@ org_id: user.user_metadata?.org_id
 
 **Recommandation**: Activer RLS sur `admin_allowed_emails` pour cohérence avec les autres tables métier, sauf si intentionnellement désactivé pour des raisons spécifiques.
 
+

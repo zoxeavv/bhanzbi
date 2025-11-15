@@ -88,3 +88,4 @@ END $$;
 -- Note: If the enum already exists with different values, this migration will
 -- not modify it. Manual intervention may be required in that case.
 
+

@@ -161,3 +161,4 @@ WHERE routine_schema = 'public'
 **Migration**: `drizzle/0008_fix_missing_rls_policies.sql`  
 **Script de vérification**: `scripts/inspect-rls-policies.sql`
 
+

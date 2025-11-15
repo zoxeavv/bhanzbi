@@ -172,3 +172,4 @@ Si certaines policies sont encore manquantes :
 
 **Script de diagnostic**: `scripts/verify-rls-policies-status.sql`
 
+

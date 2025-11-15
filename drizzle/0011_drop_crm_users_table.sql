@@ -50,3 +50,4 @@ END $$;
 -- After running this migration, verify that the table is removed from
 -- the Drizzle schema (src/lib/db/schema.ts) as well.
 
+
