@@ -371,3 +371,4 @@ Les emails dans la DB sont déjà normalisés (via `addAdminAllowedEmail`), donc
 
 **Conclusion :** L'architecture est solide et bien pensée, mais le système n'est **pas complètement branché**. Les deux actions bloquantes (modifier AuthRegister et supprimer les fallbacks) sont critiques pour la sécurité. Une fois ces corrections effectuées, le système sera fonctionnel et sécurisé.
 
+

@@ -73,3 +73,4 @@ ORDER BY table_name, grantee, privilege_type;
 -- Note: Les logs PostgreSQL ne sont pas directement accessibles via SQL
 -- Vérifier dans Supabase Dashboard → Logs
 
+

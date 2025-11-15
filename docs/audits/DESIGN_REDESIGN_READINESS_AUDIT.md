@@ -294,3 +294,4 @@ Le projet est **prêt pour le redesign** après migration de l'Auth. La base est
 
 **Confiance** : ✅ **Élevée** - Le redesign peut être lancé sereinement après migration de l'Auth.
 
+

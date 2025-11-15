@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
+import { cn } from "@/lib/utils";
 import type { Task } from "@/types/domain";
 
 const stats = [
@@ -115,6 +117,9 @@ const quickActions = [
 export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6">
+      {/* Page Header */}
+      <PageHeader title="Dashboard" />
+
       {/* Section KPI */}
       <StatsGrid />
 
@@ -132,6 +137,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 function StatsGrid() {
   return (
@@ -161,7 +167,7 @@ function PipelinePerformanceCard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-6 px-6 pb-6">
         <div className="flex items-end gap-3">
-          <p className="text-4xl font-bold tracking-tight">$125,430</p>
+          <p className="text-4xl font-bold tracking-tight text-foreground">$125,430</p>
           <div className="flex items-center gap-1 pb-1">
             <span className="text-sm font-medium text-success">+15.7%</span>
           </div>
@@ -180,17 +186,23 @@ function RecentActivityCard() {
         <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 px-6 pb-6">
-        {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-4">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${activity.iconBg}`}>
-              {activity.icon}
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium leading-snug text-foreground">{activity.title}</p>
-              <p className="text-xs text-muted-foreground">{activity.meta}</p>
-            </div>
+        {activities.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">No recent activity</p>
           </div>
-        ))}
+        ) : (
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-4">
+              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", activity.iconBg)}>
+                {activity.icon}
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-snug text-foreground">{activity.title}</p>
+                <p className="text-xs text-muted-foreground">{activity.meta}</p>
+              </div>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );
@@ -225,33 +237,40 @@ function TasksCard() {
           </nav>
         </div>
 
-        <div className="mt-6 space-y-3">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center gap-4 rounded-lg p-3 hover:bg-muted/60"
-            >
-              <Checkbox
-                checked={task.done}
-                // onCheckedChange sera branché avec toggleTask server action plus tard
-                // onCheckedChange={(checked) => toggleTask(task.id, checked === true)}
-                className="mt-0.5"
-              />
-              <div className="flex-1 space-y-1">
-                <p
-                  className={`text-sm font-medium ${
-                    task.done ? "text-muted-foreground line-through" : "text-foreground"
-                  }`}
-                >
-                  {task.label}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {task.meta}
-                </p>
+        {tasks.length === 0 ? (
+          <div className="mt-6 text-center py-8 text-muted-foreground">
+            <p className="text-sm">No tasks yet</p>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-3">
+            {tasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center gap-4 rounded-lg p-3 hover:bg-muted/60"
+              >
+                <Checkbox
+                  checked={task.done}
+                  // onCheckedChange sera branché avec toggleTask server action plus tard
+                  // onCheckedChange={(checked) => toggleTask(task.id, checked === true)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1 space-y-1">
+                  <p
+                    className={cn(
+                      "text-sm font-medium",
+                      task.done ? "text-muted-foreground line-through" : "text-foreground"
+                    )}
+                  >
+                    {task.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {task.meta}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

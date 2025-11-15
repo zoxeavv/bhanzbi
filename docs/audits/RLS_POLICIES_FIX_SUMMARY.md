@@ -119,3 +119,4 @@ Après migration, tester :
 
 **Action immédiate**: Appliquer la migration `0008_fix_missing_rls_policies.sql` pour restaurer la sécurité multi-tenant complète.
 
+

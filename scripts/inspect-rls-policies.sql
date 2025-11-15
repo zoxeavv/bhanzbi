@@ -286,3 +286,4 @@ WHERE schemaname = 'public' AND tablename = 'admin_allowed_emails';
 --
 -- Les policies devraient toutes utiliser public.org_id() pour le filtrage multi-tenant.
 
+

@@ -383,3 +383,4 @@ describe('validateOfferInput functions', () => {
   });
 });
 
+
